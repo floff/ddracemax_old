@@ -25,6 +25,7 @@ public:
 	int use_custom_color;
 	int color_body;
 	int color_feet;
+	bool color_set; // Set if player changed color at least once
 	
 	int respawn_tick;
 	int die_tick;
@@ -84,6 +85,7 @@ public:
 	int besttick;
 	int lasttick;
 	float bestLap;
+
 
 };
 

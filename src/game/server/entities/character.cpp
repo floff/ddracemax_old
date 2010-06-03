@@ -477,6 +477,10 @@ void CHARACTER::on_direct_input(NETOBJ_PLAYER_INPUT *new_input)
 
 void CHARACTER::tick()
 {
+	//endless drag
+	if(config.sv_endless_hook)
+		core.hook_tick = 0;
+
 	if(player->force_balanced)
 	{
 		char buf[128];

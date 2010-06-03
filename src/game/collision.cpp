@@ -154,8 +154,12 @@ int col_is_freeze(int x, int y)
 	int ny = y/32;
 	if(y < 0 || nx < 0 || nx >= width || ny >= height)
 		return 0;
+
+	int tile = teleporter[ny*width+nx];
 	
-	return teleporter[ny*width+nx] == TILE_FREEZE;
+	return tile == TILE_FREEZE ||
+		(tile >= TILE_BOOST_FL && tile <= TILE_BOOST_FU) ||
+		(tile >= TILE_BOOST_FL2 && tile <= TILE_BOOST_FU2);
 }
 
 int col_is_unfreeze(int x, int y)
@@ -184,8 +188,16 @@ int col_is_boost(int x, int y)
 	int ny = y/32;
 	if(y < 0 || nx < 0 || nx >= width || ny >= height)
 		return 0;
-	if ((teleporter[ny*width+nx] >= TILE_BOOST_L && teleporter[ny*width+nx] <= TILE_BOOST_U) || (teleporter[ny*width+nx] >= TILE_BOOST_L2 && teleporter[ny*width+nx] <= TILE_BOOST_U2))
-		return teleporter[ny*width+nx];
+
+	int tile = teleporter[ny*width+nx];
+
+	if	(
+			(tile >= TILE_BOOST_L && tile <= TILE_BOOST_U) || 
+			(tile >= TILE_BOOST_L2 && tile <= TILE_BOOST_U2) ||
+			(tile >= TILE_BOOST_FL && tile <= TILE_BOOST_FU) || 
+			(tile >= TILE_BOOST_FL2 && tile <= TILE_BOOST_FU2)
+		)
+		return tile;
 	return 0;
 }
 
@@ -193,21 +205,21 @@ int col_is_boost(int x, int y)
 
 vec2 boost_accel(int index)
 {
-	if (index==TILE_BOOST_L)
+	if (index==TILE_BOOST_L || index==TILE_BOOST_FL)
 		return vec2(-3,0);
-	else if(index==TILE_BOOST_R)
+	else if (index==TILE_BOOST_R || index==TILE_BOOST_FR)
 		return vec2(3,0);
-	else if(index==TILE_BOOST_D)
+	else if (index==TILE_BOOST_D || index==TILE_BOOST_FD)
 		return vec2(0,2);
-	else if(index==TILE_BOOST_U)
+	else if (index==TILE_BOOST_U || index==TILE_BOOST_FU)
 		return vec2(0,-2);
-	else if(index==TILE_BOOST_L2)
+	else if (index==TILE_BOOST_L2 || index==TILE_BOOST_FL2)
 		return vec2(-15,0);
-	else if(index==TILE_BOOST_R2)
+	else if (index==TILE_BOOST_R2 || index==TILE_BOOST_FR2)
 		return vec2(15,0);
-	else if(index==TILE_BOOST_D2)
+	else if (index==TILE_BOOST_D2 || index==TILE_BOOST_FD2)
 		return vec2(0,15);
-	else if(index==TILE_BOOST_U2)
+	else if (index==TILE_BOOST_U2 || index==TILE_BOOST_FU2)
 		return vec2(0,-15);
 
 	return vec2(0,0);

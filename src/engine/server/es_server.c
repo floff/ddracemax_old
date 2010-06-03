@@ -15,7 +15,6 @@
 #include <engine/e_compression.h>
 
 #include <engine/e_network.h>
-#include <engine/e_config.h>
 #include <engine/e_packer.h>
 #include <engine/e_datafile.h>
 #include <engine/e_demorec.h>
@@ -109,6 +108,9 @@ typedef struct
 	int score;
 	int authed;
 	int resistent;
+
+	NETADDR addr; // for storing address
+	int pw_tries; // a players rcon pw tries
 } CLIENT;
 
 static CLIENT clients[MAX_CLIENTS];
@@ -313,7 +315,7 @@ void server_setbrowseinfo(const char *game_type, int progression)
 
 void server_kick(int client_id, const char *reason)
 {
-	if(client_id < 0 || client_id > MAX_CLIENTS)
+	if(client_id < 0 || client_id >= MAX_CLIENTS)
 		return;
 		
 	if(clients[client_id].state != SRVCLIENT_STATE_EMPTY)
@@ -592,6 +594,8 @@ static int new_client_callback(int cid, void *user)
 	clients[cid].name[0] = 0;
 	clients[cid].clan[0] = 0;
 	clients[cid].authed = 0;
+	clients[cid].pw_tries = 0; // init pw tries
+	memset(&clients[cid].addr, 0, sizeof(NETADDR)); // init that too
 	clients[cid].resistent = 0;
 	reset_client(cid);
 	return 0;
@@ -607,6 +611,8 @@ static int del_client_callback(int cid, void *user)
 	clients[cid].name[0] = 0;
 	clients[cid].clan[0] = 0;
 	clients[cid].authed = 0;
+	clients[cid].pw_tries = 0;
+	memset(&clients[cid].addr, 0, sizeof(NETADDR));
 	clients[cid].resistent = 0;
 	snapstorage_purge_all(&clients[cid].snapshots);
 	return 0;
@@ -689,6 +695,40 @@ static void server_process_client_packet(NETCHUNK *packet)
  				return;
  			}
 
+			netserver_client_addr(net, cid, &addr);
+			clients[cid].addr = addr; // store the address info
+			int i, ipcnt = 0; // ip count
+			for(i=0; i<MAX_CLIENTS; i++)
+			{
+				if(clients[i].state != SRVCLIENT_STATE_EMPTY) // if not an empty slot
+				{
+					if (	clients[i].addr.ip[0] == addr.ip[0] && // check each ip byte
+						clients[i].addr.ip[1] == addr.ip[1] && 
+						clients[i].addr.ip[2] == addr.ip[2] && 
+						clients[i].addr.ip[3] == addr.ip[3])
+					{
+
+						if(clients[i].authed > 0) // authed players can have clones
+						{
+							ipcnt = 0;
+							break;
+						}
+
+						ipcnt++; // ++
+					}
+				}
+			}
+
+			if(ipcnt > config.sv_max_connections) // if already n connections exist, drop him
+			{
+				dbg_msg("server", "player dropped, too many connections. cid=%x ip=%d.%d.%d.%d",
+					cid,
+					addr.ip[0], addr.ip[1], addr.ip[2], addr.ip[3]
+					);
+				netserver_drop(net, cid, "Too many connections");
+				return;
+			}
+
 			clients[cid].state = SRVCLIENT_STATE_CONNECTING;
 			server_send_map(cid);
 		}
@@ -732,7 +772,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 			{
 				if(clients[cid].state == SRVCLIENT_STATE_CONNECTING)
 				{
-					netserver_client_addr(net, cid, &addr);					
+					netserver_client_addr(net, cid, &addr);
 
 					dbg_msg("server", "player is ready. cid=%x ip=%d.%d.%d.%d",
 						cid,
@@ -846,6 +886,8 @@ static void server_process_client_packet(NETCHUNK *packet)
 						mods_set_authed(cid, clients[cid].authed);
 						server_send_rcon_line(cid, "Authentication successful. Logined as Admin. Remote console access granted.");
 						dbg_msg("server", "cid=%d authed as Admin", cid);
+
+						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
 					}
 					else if(strcmp(pw, config.sv_rcon_password_moder) == 0)
 					{
@@ -858,6 +900,8 @@ static void server_process_client_packet(NETCHUNK *packet)
 						mods_set_authed(cid, clients[cid].authed);
 						server_send_rcon_line(cid, "Authentication successful. Logined as Moderator. Remote console access granted.");
 						dbg_msg("server", "cid=%d authed as Moderator", cid);
+
+						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
 					}
 					else if(strcmp(pw, config.sv_rcon_password_helper) == 0)
 					{
@@ -865,15 +909,22 @@ static void server_process_client_packet(NETCHUNK *packet)
 						msg_pack_int(1);
 						msg_pack_end();
 						server_send_msg(cid);
-						
+							
 						clients[cid].authed = 1;
 						mods_set_authed(cid, clients[cid].authed);
 						server_send_rcon_line(cid, "Authentication successful. Logined as Helper. Remote console access granted.");
 						dbg_msg("server", "cid=%d authed as Helper", cid);
+
+						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
 					}
 					else
 					{
 						server_send_rcon_line(cid, "Wrong password.");
+
+						if(++clients[cid].pw_tries > 3) { // too many rcon pw tries
+							server_ban_add(clients[cid].addr, 300); // bye
+							dbg_msg("server", "cid=%d banned, wrong pw", cid);
+						}
 					}
 				}
 			}
@@ -1088,10 +1139,7 @@ static int server_run()
 		bindaddr.port = config.sv_port;
 	}
 
-net = netserver_open(bindaddr, config.sv_max_clients, 0);
-
-
-	
+	net = netserver_open(bindaddr, config.sv_max_clients, 0);
 
 	if(!net)
 	{
@@ -1298,7 +1346,7 @@ static void con_ban(void *result, void *user_data, int cid)
 		if (cid != -1 && clients[cid].authed<=clients[cid1].authed)
 			return;
 
-		if(cid1 < 0 || cid1 > MAX_CLIENTS || clients[cid1].state == SRVCLIENT_STATE_EMPTY)
+		if(cid1 < 0 || cid1 >= MAX_CLIENTS || clients[cid1].state == SRVCLIENT_STATE_EMPTY)
 		{
 			dbg_msg("server", "invalid client id");
 			return;
@@ -1433,7 +1481,6 @@ int main(int argc, char **argv)
 	
 	/* parse the command line arguments */
 	engine_parse_arguments(argc, argv);
-
 
 	/* run the server */
 	server_run();

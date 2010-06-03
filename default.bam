@@ -213,7 +213,7 @@ function build(settings)
 		engine, client, game_editor, zlib, pnglite, wavpack,
 		client_link_other, client_osxlaunch)
 
-	server_exe = Link(server_settings, "teeworlds_srv", engine, server,
+	server_exe = Link(server_settings, "ddrace_srv", engine, server,
 		game_shared, game_server, zlib)
 
 	serverlaunch = {}
@@ -300,9 +300,48 @@ if platform == "macosx"  and arch == "ia32" then
 	PseudoTarget("server_debug", "server_debug_x86", "server_debug_ppc")
 	PseudoTarget("client_release", "client_release_x86", "client_release_ppc")
 	PseudoTarget("client_debug", "client_debug_x86", "client_debug_ppc")
+elseif arch == "amd64" then
+	debug_settings_x86_64 = debug_settings:Copy()
+	debug_settings_x86_64.config_name = "debug_x86_64"
+	debug_settings_x86_64.config_ext = "_x86_64_d"
+	debug_settings_x86_64.cc.defines:Add("CONF_DEBUG")
+
+	release_settings_x86_64 = release_settings:Copy()
+	release_settings_x86_64.config_name = "release_x86_64"
+	release_settings_x86_64.config_ext = "_x86_64"
+	release_settings_x86_64.cc.defines:Add("CONF_RELEASE")
+
+	debug_settings_x86 = debug_settings:Copy()
+	debug_settings_x86.config_name = "debug_x86"
+	debug_settings_x86.config_ext = "_x86_d"
+	debug_settings_x86.cc.flags:Add("-m32")
+	debug_settings_x86.link.flags:Add("-m32")
+	debug_settings_x86.cc.defines:Add("CONF_DEBUG")
+
+	release_settings_x86 = release_settings:Copy()
+	release_settings_x86.config_name = "release_x86"
+	release_settings_x86.config_ext = "_x86"
+	release_settings_x86.cc.flags:Add("-m32")
+	release_settings_x86.link.flags:Add("-m32")
+	release_settings_x86.cc.defines:Add("CONF_RELEASE")
+
+	x86_64_d = build(debug_settings_x86_64)
+	x86_d = build(debug_settings_x86)
+	x86_64_r = build(release_settings_x86_64)
+	x86_r = build(release_settings_x86)
+	PseudoTarget("release", x86_64_r, x86_r)
+	PseudoTarget("debug", x86_64_d, x86_d)
+
+	PseudoTarget("server_release", "server_release_x86", "server_release_x86_64")
+	PseudoTarget("server_debug", "server_debug_x86", "server_debug_x86_64")
+	PseudoTarget("server_all", "server_release_x86", "server_release_x86_64", "server_debug_x86", "server_debug_x86_64")
+	PseudoTarget("client_release", "client_release_x86", "client_release_x86_64")
+	PseudoTarget("client_debug", "client_debug_x86", "client_debug_x86_64")
+	DefaultTarget("server_all")
 else
 	build(debug_settings)
 	build(release_settings)
+	PseudoTarget("server_all", "server_release", "server_debug")
 	DefaultTarget("game_debug")
 end
 

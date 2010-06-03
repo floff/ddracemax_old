@@ -113,18 +113,6 @@ void mods_tick()
 	check_pure_tuning();
 	
 	game.tick();
-
-#ifdef CONF_DEBUG
-	if(config.dbg_dummies)
-	{
-		for(int i = 0; i < config.dbg_dummies ; i++)
-		{
-			NETOBJ_PLAYER_INPUT input = {0};
-			input.direction = (i&1)?-1:1;
-			game.players[MAX_CLIENTS-i-1]->on_predicted_input(&input);
-		}
-	}
-#endif
 }
 
 void mods_snap(int client_id)
@@ -421,9 +409,13 @@ void mods_message(int msgtype, int client_id)
 			
 		p->last_changeinfo = time_get();
 		
-		p->use_custom_color = msg->use_custom_color;
-		p->color_body = msg->color_body;
-		p->color_feet = msg->color_feet;
+		if (!p->color_set || config.sv_allow_color_change)
+		{
+			p->use_custom_color = msg->use_custom_color;
+			p->color_body = msg->color_body;
+			p->color_feet = msg->color_feet;
+			p->color_set = true;
+		}
 
 		// check for invalid chars
 		unsigned char *name = (unsigned char *)msg->name;
@@ -921,20 +913,6 @@ void mods_init()
 	}
 	//
 	//game.world.insert_entity(game.controller);
-
-#ifdef CONF_DEBUG
-	if(config.dbg_dummies)
-	{
-		for(int i = 0; i < config.dbg_dummies ; i++)
-		{
-			mods_connected(MAX_CLIENTS-i-1);
-			mods_client_enter(MAX_CLIENTS-i-1);
-			if(game.controller->is_teamplay())
-				game.players[MAX_CLIENTS-i-1]->team = i&1;
-		}
-	}
-#endif
-
 }
 
 void mods_shutdown()

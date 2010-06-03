@@ -67,7 +67,8 @@ MACRO_CONFIG_INT(sv_register, 1, 0, 1, CFGFLAG_SERVER, "Register server with mas
 MACRO_CONFIG_STR(sv_rcon_password_admin, 32, "", CFGFLAG_SERVER, "Remote console admin password")
 MACRO_CONFIG_STR(sv_rcon_password_moder, 32, "", CFGFLAG_SERVER, "Remote console moderator password")
 MACRO_CONFIG_STR(sv_rcon_password_helper, 32, "", CFGFLAG_SERVER, "Remote console helper password")
-
+MACRO_CONFIG_INT(sv_max_connections, 2, 1, 16, CFGFLAG_SERVER, "Maximum count of connection from one IP server can accept")
+MACRO_CONFIG_INT(sv_allow_color_change, 1, 0, 1, CFGFLAG_SERVER, "Allow color change (can block rainbowmod)")
 
 MACRO_CONFIG_INT(sv_map_reload, 0, 0, 1, CFGFLAG_SERVER, "Reload the current map")
 

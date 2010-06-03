@@ -1,3 +1,12 @@
 *.py[co]
 .*.sw[po]
 *.o
+ddrace_srv_x86
+ddrace_srv_x86_64
+ddrace_srv_x86_64_d
+ddrace_srv_x86_d
+src/game/generated/g_protocol.cpp
+src/game/generated/g_protocol.hpp
+src/game/generated/gs_data.cpp
+src/game/generated/gs_data.hpp
+src/game/generated/nethash.c

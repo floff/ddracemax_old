@@ -65,3 +65,5 @@ MACRO_CONFIG_STR(sv_broadcast, 64, "DDM Community", CFGFLAG_SERVER, "File for ti
 MACRO_CONFIG_STR(sv_welcome, 64, "Visit ddm.ucoz.net", CFGFLAG_SERVER, "File for tickets")
 MACRO_CONFIG_INT(sv_votes, 1, 0, 1, CFGFLAG_SERVER, "")
 MACRO_CONFIG_INT(sv_championship, 0, 0, 1, CFGFLAG_SERVER, "")
+
+MACRO_CONFIG_INT(sv_endless_hook, 0, 0, 1, CFGFLAG_SERVER, "Hook to player does not release")
