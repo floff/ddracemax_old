@@ -96,6 +96,24 @@ int col_is_solid(int x, int y)
 	return (col_get(x,y)&COLFLAG_SOLID);
 }
 
+int col_is_through(int x, int y)
+{
+	/*
+	 * TODO
+	 * Make one function to get tiles like that
+	 * It hurts to look at it
+	 */
+
+	int nx = x/32;
+	int ny = y/32;
+	if(y < 0 || nx < 0 || nx >= width || ny >= height)
+		return 0;
+
+	int tile = teleporter[ny*width+nx];
+	
+	return tile == TILE_THROUGH || tile == TILE_THROUGHF;
+}
+
 int col_is_nolaser(int x, int y)
 {
 	return (col_get(x,y)&COLFLAG_NOLASER);
@@ -158,7 +176,7 @@ int col_is_freeze(int x, int y)
 	int tile = teleporter[ny*width+nx];
 	
 	return tile == TILE_FREEZE ||
-		(tile >= TILE_BOOST_FL && tile <= TILE_BOOST_FU) ||
+		(tile >= TILE_BOOST_FL && tile <= TILE_THROUGHF) ||
 		(tile >= TILE_BOOST_FL2 && tile <= TILE_BOOST_FU2);
 }
 
@@ -247,23 +265,64 @@ void col_set(int x, int y, int flag)
 	tiles[ny*width+nx].index = flag;
 }
 
+void col_through_offset(vec2 pos0, vec2 pos1, int *ox, int *oy)
+{
+	float x = pos0.x - pos1.x;
+	float y = pos0.y - pos1.y;
+	if (fabs(x) > fabs(y))
+	{
+		if (x < 0)
+		{
+			*ox = -32;
+			*oy = 0;
+		}
+		else
+		{
+			*ox = 32;
+			*oy = 0;
+		}
+	}
+	else
+	{
+		if (y < 0)
+		{
+			*ox = 0;
+			*oy = -32;
+		}
+		else
+		{
+			*ox = 0;
+			*oy = 32;
+		}
+	}
+}
+
 // TODO: rewrite this smarter!
-int col_intersect_line(vec2 pos0, vec2 pos1, vec2 *out_collision, vec2 *out_before_collision)
+int col_intersect_line(vec2 pos0, vec2 pos1, vec2 *out_collision, vec2 *out_before_collision, bool allow_through)
 {
 	float d = distance(pos0, pos1);
 	vec2 last = pos0;
+	int ix, iy; // Temporary position for checking collision
+	int dx, dy; // Offset for checking the "through" tile
+
+	if (allow_through)
+	{
+		col_through_offset(pos0, pos1, &dx, &dy);
+	}
 	
 	for(float f = 0; f < d; f++)
 	{
 		float a = f/d;
 		vec2 pos = mix(pos0, pos1, a);
-		if(col_is_solid(round(pos.x), round(pos.y)))
+		ix = round(pos.x);
+		iy = round(pos.y);
+		if(col_is_solid(ix, iy) && !(allow_through && col_is_through(ix + dx, iy + dy)))
 		{
 			if(out_collision)
 				*out_collision = pos;
 			if(out_before_collision)
 				*out_before_collision = last;
-			return col_get(round(pos.x), round(pos.y));
+			return col_get(ix, iy);
 		}
 		last = pos;
 	}

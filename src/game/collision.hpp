@@ -19,7 +19,7 @@ void col_set(int x, int y, int flag);
 int col_get(int x, int y);
 int col_width();
 int col_height();
-int col_intersect_line(vec2 pos0, vec2 pos1, vec2 *out_collision, vec2 *out_before_collision);
+int col_intersect_line(vec2 pos0, vec2 pos1, vec2 *out_collision, vec2 *out_before_collision, bool allow_through = false);
 int col_intersect_nolaser(vec2 pos0, vec2 pos1, vec2 *out_collision, vec2 *out_before_collision);
 int col_intersect_air(vec2 pos0, vec2 pos1, vec2 *out_collision, vec2 *out_before_collision);
 
