@@ -297,6 +297,9 @@ void CHARACTER_CORE::tick(bool use_input)
 		{
 			hook_state = HOOK_RETRACT_START;
 			new_pos = pos + normalize(new_pos-pos) * world->tuning.hook_length;
+
+			// small hack to reset prediction (or smth)
+			p_reset = true;
 		}
 		
 		// make sure that the hook doesn't go though the ground
@@ -309,6 +312,9 @@ void CHARACTER_CORE::tick(bool use_input)
 				going_to_retract = true;
 			else
 				going_to_hit_ground = true;
+
+			// small hack to reset prediction (or smth)
+			p_reset = true;
 		}
 
 		// Check against other players first

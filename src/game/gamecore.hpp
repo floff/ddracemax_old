@@ -179,6 +179,9 @@ public:
 	int direction;
 	int angle;
 	NETOBJ_PLAYER_INPUT input;
+
+	// ugly hack
+	bool p_reset;
 	
 	int triggered_events;
 	
