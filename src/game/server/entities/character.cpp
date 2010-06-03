@@ -736,7 +736,6 @@ void CHARACTER::tick_defered()
 		// only allow dead reackoning for a top of 3 seconds
 		if(core.p_reset || reckoning_tick+server_tickspeed()*3 < server_tick() || mem_comp(&predicted, &current, sizeof(NETOBJ_CHARACTER)) != 0)
 		{
-			dbg_msg("FLUXID", "RESET");
 			reckoning_tick = server_tick();
 			sendcore = core;
 			reckoningcore = core;
