@@ -10,3 +10,4 @@ src/game/generated/g_protocol.hpp
 src/game/generated/gs_data.cpp
 src/game/generated/gs_data.hpp
 src/game/generated/nethash.c
+test
