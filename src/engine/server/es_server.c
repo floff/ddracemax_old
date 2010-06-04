@@ -666,6 +666,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 		{
 			char version[64];
 			const char *password;
+			int i, ipcnt = 0; // ip count
 			str_copy(version, msg_unpack_string(), 64);
 			if(strcmp(version, mods_net_version()) != 0)
 			{
@@ -697,7 +698,6 @@ static void server_process_client_packet(NETCHUNK *packet)
 
 			netserver_client_addr(net, cid, &addr);
 			clients[cid].addr = addr; // store the address info
-			int i, ipcnt = 0; // ip count
 			for(i=0; i<MAX_CLIENTS; i++)
 			{
 				if(clients[i].state != SRVCLIENT_STATE_EMPTY) // if not an empty slot
