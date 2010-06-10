@@ -245,7 +245,6 @@ static int server_try_setclientname(int client_id, const char *name)
 	/* trim the name */
 	str_copy(trimmed_name, str_ltrim(name), sizeof(trimmed_name));
 	str_rtrim(trimmed_name);
-	dbg_msg("", "'%s' -> '%s'", name, trimmed_name);
 	name = trimmed_name;
 	
 	
