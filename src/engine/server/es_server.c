@@ -111,6 +111,7 @@ typedef struct
 
 	NETADDR addr; // for storing address
 	int pw_tries; // a players rcon pw tries
+	int cmd_tries; // players rcon command tries, to prevent command flood server crash
 } CLIENT;
 
 static CLIENT clients[MAX_CLIENTS];
@@ -595,6 +596,7 @@ static int new_client_callback(int cid, void *user)
 	clients[cid].authed = 0;
 	clients[cid].pw_tries = 0; // init pw tries
 	memset(&clients[cid].addr, 0, sizeof(NETADDR)); // init that too
+	clients[cid].cmd_tries = 0; // init cmd tries
 	clients[cid].resistent = 0;
 	reset_client(cid);
 	return 0;
@@ -612,6 +614,7 @@ static int del_client_callback(int cid, void *user)
 	clients[cid].authed = 0;
 	clients[cid].pw_tries = 0;
 	memset(&clients[cid].addr, 0, sizeof(NETADDR));
+	clients[cid].cmd_tries = 0;
 	clients[cid].resistent = 0;
 	snapstorage_purge_all(&clients[cid].snapshots);
 	return 0;
@@ -722,8 +725,9 @@ static void server_process_client_packet(NETCHUNK *packet)
 			{
 				dbg_msg("server", "player dropped, too many connections. cid=%x ip=%d.%d.%d.%d",
 					cid,
-					addr.ip[0], addr.ip[1], addr.ip[2], addr.ip[3]
+					clients[i].addr.ip[0], clients[i].addr.ip[1], clients[i].addr.ip[2], clients[i].addr.ip[3]
 					);
+
 				netserver_drop(net, cid, "Too many connections");
 				return;
 			}
@@ -859,7 +863,20 @@ static void server_process_client_packet(NETCHUNK *packet)
 					//if (clients[cid].authed!=0)
 					//	dbg_msg("server", "cid=%d rcon='%s' lvl=%d", cid, cmd,clients[cid].authed);
 
-					console_execute_line(cmd,clients[cid].authed,cid);
+					netserver_client_addr(net, cid, &addr);
+					if(clients[cid].authed == 0) {
+						if(++clients[cid].cmd_tries > 2) {
+							dbg_msg("server", "client tried rcon command without permissions, ban. cid=%x ip=%d.%d.%d.%d",
+								cid,
+								clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+								);
+
+							server_ban_add(clients[cid].addr, 300); // bye
+						}
+					}
+					else {
+						console_execute_line(cmd,clients[cid].authed,cid);
+					}
 				}
 			}
 			else if(msg == NETMSG_RCON_AUTH)
@@ -918,12 +935,16 @@ static void server_process_client_packet(NETCHUNK *packet)
 					}
 					else
 					{
-						server_send_rcon_line(cid, "Wrong password.");
-
 						if(++clients[cid].pw_tries > 3) { // too many rcon pw tries
+							dbg_msg("server", "client tried bruteforce rcon, banned. cid=%x ip=%d.%d.%d.%d",
+								cid,
+								clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+								);
+
 							server_ban_add(clients[cid].addr, 300); // bye
-							dbg_msg("server", "cid=%d banned, wrong pw", cid);
 						}
+
+						server_send_rcon_line(cid, "Wrong password.");
 					}
 				}
 			}
@@ -1311,6 +1332,7 @@ static void con_kick(void *result, void *user_data, int cid)
 	{
 		char buf[128];
 		str_format(buf,sizeof(buf),"Kicked by %s",server_clientname(cid));
+
 		server_kick(console_arg_int(result, 0), buf);
 	}
 }
