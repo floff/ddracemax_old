@@ -40,6 +40,8 @@ public:
 	int vote;
 	int64 last_votecall;
 
+	int64 last_kickvote;
+
 	//
 	int64 last_chat;
 	int64 last_setteam;

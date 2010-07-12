@@ -12,10 +12,14 @@ PLAYER::PLAYER(int client_id)
 	respawn_tick = server_tick();
 	character = 0;
 	this->client_id = client_id;
+
+	this->last_kickvote = 0;
 }
 
 PLAYER::~PLAYER()
 {
+	this->last_kickvote = 0;
+
 	delete character;
 	character = 0;
 }
