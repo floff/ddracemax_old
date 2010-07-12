@@ -204,7 +204,7 @@ bool GAMECONTROLLER::on_entity(int index, int x, int y)
 					vec2(sin(deg),cos(deg)),
 					-2,
 					true, PROJECTILE::PROJECTILE_FLAGS_EXPLODE,
-					0, SOUND_GRENADE_EXPLODE, WEAPON_SHOTGUN);
+					0, -1, WEAPON_SHOTGUN);
 				proj->bouncing=2-(i % 2);
 
 			}
@@ -223,7 +223,7 @@ bool GAMECONTROLLER::on_entity(int index, int x, int y)
 				vec2(sin(deg),cos(deg)),
 				-2,
 				true, 0,
-				0, SOUND_GRENADE_EXPLODE, WEAPON_SHOTGUN);
+				0, -1, WEAPON_SHOTGUN);
 			proj->bouncing=2-(i % 2);
 			}
 		}
