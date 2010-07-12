@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <cstring> // strncmp
 
 #include <base/math.hpp>
 
@@ -301,10 +302,16 @@ void mods_message(int msgtype, int client_id)
 			if (config.sv_votes==1)
 			{
 				VOTEOPTION *option = voteoption_first;
+				static int64 last_mapvote = 0;
 				while(option)
 				{
 					if(str_comp_nocase(msg->value, option->command) == 0)
 					{
+						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * 600)) {
+							game.send_chat_target(client_id, "A map was recently voted, try again in a few minutes");
+							return;
+						}
+
 						str_format(chatmsg, sizeof(chatmsg), "%s called vote to change server option '%s'", server_clientname(client_id), option->command);
 						str_format(desc, sizeof(desc), "%s", option->command);
 						str_format(cmd, sizeof(cmd), "%s", option->command);
@@ -320,10 +327,17 @@ void mods_message(int msgtype, int client_id)
 					game.send_chat_target(client_id, chatmsg);
 					return;
 				}
+
+				last_mapvote = time_get();
 			}
 		}
 		else if(str_comp_nocase(msg->type, "kick") == 0)
 		{
+			if(game.players[client_id]->authed == 0 && time_get() < game.players[client_id]->last_kickvote + (time_freq() * 300)) {
+				game.send_chat_target(client_id, "There's a 5 min wait between kickvotes for each player");
+				return;
+			}
+
 			if(!config.sv_vote_kick)
 			{
 				game.send_chat_target(client_id, "Server does not allow voting to kick players");
@@ -348,6 +362,8 @@ void mods_message(int msgtype, int client_id)
 				str_format(cmd, sizeof(cmd), "kick %d", kick_id);
 			else
 				str_format(cmd, sizeof(cmd), "ban %d %d", kick_id, config.sv_vote_kick_bantime);
+
+			game.players[client_id]->last_kickvote = time_get();
 		}
 		
 		if(cmd[0])
