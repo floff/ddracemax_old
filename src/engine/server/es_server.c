@@ -111,6 +111,7 @@ typedef struct
 
 	NETADDR addr; // for storing address
 	int pw_tries; // a players rcon pw tries
+	int64 last_cmd; // time
 	int cmd_tries; // players rcon command tries, to prevent command flood server crash
 } CLIENT;
 
@@ -596,6 +597,7 @@ static int new_client_callback(int cid, void *user)
 	clients[cid].authed = 0;
 	clients[cid].pw_tries = 0; // init pw tries
 	memset(&clients[cid].addr, 0, sizeof(NETADDR)); // init that too
+	clients[cid].last_cmd = 0;
 	clients[cid].cmd_tries = 0; // init cmd tries
 	clients[cid].resistent = 0;
 	reset_client(cid);
@@ -614,6 +616,7 @@ static int del_client_callback(int cid, void *user)
 	clients[cid].authed = 0;
 	clients[cid].pw_tries = 0;
 	memset(&clients[cid].addr, 0, sizeof(NETADDR));
+	clients[cid].last_cmd = 0;
 	clients[cid].cmd_tries = 0;
 	clients[cid].resistent = 0;
 	snapstorage_purge_all(&clients[cid].snapshots);
@@ -865,14 +868,23 @@ static void server_process_client_packet(NETCHUNK *packet)
 
 					netserver_client_addr(net, cid, &addr);
 					if(clients[cid].authed == 0) {
-						if(++clients[cid].cmd_tries > 2) {
-							dbg_msg("server", "client tried rcon command without permissions, ban. cid=%x ip=%d.%d.%d.%d",
-								cid,
-								clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
-								);
+						if(time_get() < clients[cid].last_cmd + time_freq()/* * 1*/) {
+							if(clients[cid].cmd_tries > 9) {
+								dbg_msg("server", "client tried rcon command without permissions, ban. cid=%x ip=%d.%d.%d.%d",
+									cid,
+									clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+									);
 
-							server_ban_add(clients[cid].addr, 300); // bye
+								server_ban_add(clients[cid].addr, 300); // bye
+							}
+
+							clients[cid].cmd_tries++;
 						}
+						else {
+							clients[cid].cmd_tries = 0;
+						}
+
+						clients[cid].last_cmd = time_get();
 					}
 					else {
 						console_execute_line(cmd,clients[cid].authed,cid);
