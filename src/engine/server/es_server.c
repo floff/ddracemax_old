@@ -870,7 +870,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 					if(clients[cid].authed == 0) {
 						if(time_get() < clients[cid].last_cmd + time_freq()/* * 1*/) {
 							if(clients[cid].cmd_tries > 9) {
-								dbg_msg("server", "client tried rcon command without permissions, ban. cid=%x ip=%d.%d.%d.%d",
+								dbg_msg("server", "client tried rcon commands (%d) without permissions, ban. cid=%x ip=%d.%d.%d.%d", clients[cid].cmd_tries, 
 									cid,
 									clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 									);
