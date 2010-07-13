@@ -192,6 +192,21 @@ void mods_message(int msgtype, int client_id)
 {
 	void *rawmsg = netmsg_secure_unpack(msgtype);
 	PLAYER *p = game.players[client_id];
+
+	if(p->authed == 0) {
+		if(time_get() < p->last_command + time_freq()/* * 1*/) {
+			if(p->command_count > 9) {
+				return;
+			}
+
+			p->command_count++;
+		}
+		else {
+			p->command_count = 0;
+		}
+
+		p->last_command = time_get();
+	}
 	
 	if(!rawmsg)
 	{

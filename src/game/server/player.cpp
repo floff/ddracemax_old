@@ -14,11 +14,15 @@ PLAYER::PLAYER(int client_id)
 	this->client_id = client_id;
 
 	this->last_kickvote = 0;
+	this->last_command = 0;
+	this->command_count = 0;
 }
 
 PLAYER::~PLAYER()
 {
 	this->last_kickvote = 0;
+	this->last_command = 0;
+	this->command_count = 0;
 
 	delete character;
 	character = 0;
