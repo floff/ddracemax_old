@@ -858,9 +858,24 @@ static void con_tuning_off(void *result, void *user_data, int cid)
 {
 	game.tunes=false;
 }
+static void con_rcon_tries_bantime(void *result, void *user_data, int cid)
+{
+		int val = console_arg_int(result, 0);
+		config.sv_rcon_tries_bantime=val;
+		
+}
+
+static void con_rcon_tries(void *result, void *user_data, int cid)
+{
+		int val = console_arg_int(result, 0);
+		config.sv_rcon_tries=val;
+		
+}
 
 void mods_console_init()
 {
+	MACRO_REGISTER_COMMAND("sv_rcon_tries", "i", CFGFLAG_SERVER, con_rcon_tries , 0, "How Many Password Tries Before ban",3);
+	MACRO_REGISTER_COMMAND("sv_rcon_tries_bantime", "i", CFGFLAG_SERVER, con_rcon_tries_bantime , 0, "How Much time will the brute rcon password attacker will be banned",3);
 	MACRO_REGISTER_COMMAND("tune", "si", CFGFLAG_SERVER, con_tune_param, 0, "",3);
 	MACRO_REGISTER_COMMAND("tune_reset", "", CFGFLAG_SERVER, con_tune_reset, 0, "",3);
 	MACRO_REGISTER_COMMAND("tune_dump", "", CFGFLAG_SERVER, con_tune_dump, 0, "",3);

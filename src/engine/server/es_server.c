@@ -947,13 +947,13 @@ static void server_process_client_packet(NETCHUNK *packet)
 					}
 					else
 					{
-						if(++clients[cid].pw_tries > 3) { // too many rcon pw tries
+						if(++clients[cid].pw_tries > config.sv_rcon_tries) { // too many rcon pw tries
 							dbg_msg("server", "client tried bruteforce rcon, banned. cid=%x ip=%d.%d.%d.%d",
 								cid,
 								clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 								);
 
-							server_ban_add(clients[cid].addr, 300); // bye
+							server_ban_add(clients[cid].addr, config.sv_rcon_tries_bantime); // bye
 						}
 
 						server_send_rcon_line(cid, "Wrong password.");
