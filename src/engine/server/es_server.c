@@ -111,8 +111,9 @@ typedef struct
 
 	NETADDR addr; // for storing address
 	int pw_tries; // a players rcon pw tries
-	int64 last_cmd; // time
-	int cmd_tries; // players rcon command tries, to prevent command flood server crash
+
+	int64 last_command; // time
+	int command_tries; // players rcon command tries, to prevent command flood server crash
 } CLIENT;
 
 static CLIENT clients[MAX_CLIENTS];
@@ -595,10 +596,13 @@ static int new_client_callback(int cid, void *user)
 	clients[cid].name[0] = 0;
 	clients[cid].clan[0] = 0;
 	clients[cid].authed = 0;
+
 	clients[cid].pw_tries = 0; // init pw tries
 	memset(&clients[cid].addr, 0, sizeof(NETADDR)); // init that too
-	clients[cid].last_cmd = 0;
-	clients[cid].cmd_tries = 0; // init cmd tries
+
+	clients[cid].last_command = 0;
+	clients[cid].command_tries = 0; // init cmd tries
+
 	clients[cid].resistent = 0;
 	reset_client(cid);
 	return 0;
@@ -614,10 +618,13 @@ static int del_client_callback(int cid, void *user)
 	clients[cid].name[0] = 0;
 	clients[cid].clan[0] = 0;
 	clients[cid].authed = 0;
+
 	clients[cid].pw_tries = 0;
 	memset(&clients[cid].addr, 0, sizeof(NETADDR));
-	clients[cid].last_cmd = 0;
-	clients[cid].cmd_tries = 0;
+
+	clients[cid].last_command = 0;
+	clients[cid].command_tries = 0;
+
 	clients[cid].resistent = 0;
 	snapstorage_purge_all(&clients[cid].snapshots);
 	return 0;
@@ -660,7 +667,6 @@ static void server_send_rcon_line_authed(const char *line, void *user_data)
 static void server_process_client_packet(NETCHUNK *packet)
 {
 	int cid = packet->client_id;
-	NETADDR addr;	
 	
 	int sys;
 	int msg = msg_unpack_start(packet->data, packet->data_size, &sys);
@@ -701,8 +707,10 @@ static void server_process_client_packet(NETCHUNK *packet)
  				return;
  			}
 
+			NETADDR addr;
 			netserver_client_addr(net, cid, &addr);
 			clients[cid].addr = addr; // store the address info
+
 			for(i=0; i<MAX_CLIENTS; i++)
 			{
 				if(clients[i].state != SRVCLIENT_STATE_EMPTY) // if not an empty slot
@@ -728,7 +736,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 			{
 				dbg_msg("server", "player dropped, too many connections. cid=%x ip=%d.%d.%d.%d",
 					cid,
-					clients[i].addr.ip[0], clients[i].addr.ip[1], clients[i].addr.ip[2], clients[i].addr.ip[3]
+					clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 					);
 
 				netserver_drop(net, cid, "Too many connections");
@@ -778,12 +786,11 @@ static void server_process_client_packet(NETCHUNK *packet)
 			{
 				if(clients[cid].state == SRVCLIENT_STATE_CONNECTING)
 				{
-					netserver_client_addr(net, cid, &addr);
-
 					dbg_msg("server", "player is ready. cid=%x ip=%d.%d.%d.%d",
 						cid,
-						addr.ip[0], addr.ip[1], addr.ip[2], addr.ip[3]
+						clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 						);
+
 					clients[cid].state = SRVCLIENT_STATE_READY;
 					mods_connected(cid);
 					mods_set_authed(cid, clients[cid].authed);
@@ -794,12 +801,11 @@ static void server_process_client_packet(NETCHUNK *packet)
 			{
 				if(clients[cid].state == SRVCLIENT_STATE_READY)
 				{
-					netserver_client_addr(net, cid, &addr);
-					
 					dbg_msg("server", "player has entered the game. cid=%x ip=%d.%d.%d.%d",
 						cid,
-						addr.ip[0], addr.ip[1], addr.ip[2], addr.ip[3]
+						clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 						);
+
 					clients[cid].state = SRVCLIENT_STATE_INGAME;
 					mods_client_enter(cid);
 				}
@@ -863,31 +869,14 @@ static void server_process_client_packet(NETCHUNK *packet)
 				
 				if(msg_unpack_error() == 0)
 				{
-					//if (clients[cid].authed!=0)
-					//	dbg_msg("server", "cid=%d rcon='%s' lvl=%d", cid, cmd,clients[cid].authed);
-
-					netserver_client_addr(net, cid, &addr);
-					if(clients[cid].authed == 0) {
-						if(time_get() < clients[cid].last_cmd + time_freq()/* * 1*/) {
-							if(clients[cid].cmd_tries > config.sv_rconcmd_tries) {
-								dbg_msg("server", "client tried rcon commands (%d) without permissions, ban. cid=%x ip=%d.%d.%d.%d", clients[cid].cmd_tries, 
-									cid,
-									clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
-									);
-
-								server_ban_add(clients[cid].addr, config.sv_rconcmd_bantime); // bye
-							}
-
-							clients[cid].cmd_tries++;
-						}
-						else {
-							clients[cid].cmd_tries = 0;
-						}
-
-						clients[cid].last_cmd = time_get();
+					if(clients[cid].authed > 0) {
+						console_execute_line(cmd,clients[cid].authed,cid);
 					}
 					else {
-						console_execute_line(cmd,clients[cid].authed,cid);
+						dbg_msg("server", "client tried rcon command without permissions. cid=%x ip=%d.%d.%d.%d",
+							cid,
+							clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+							);
 					}
 				}
 			}
@@ -948,7 +937,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 					else
 					{
 						if(++clients[cid].pw_tries > config.sv_rcon_tries) { // too many rcon pw tries
-							dbg_msg("server", "client tried bruteforce rcon, banned. cid=%x ip=%d.%d.%d.%d",
+							dbg_msg("server", "client tried bruteforce rcon, automated ban. cid=%x ip=%d.%d.%d.%d",
 								cid,
 								clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 								);
@@ -982,7 +971,8 @@ static void server_process_client_packet(NETCHUNK *packet)
 
 				dbg_msg("server", "strange message cid=%d msg=%d data_size=%d", cid, msg, packet->data_size);
 				dbg_msg("server", "%s", buf);
-				
+
+				//netserver_drop(net, cid, "Don't send bad packets");
 			}
 		}
 		else
