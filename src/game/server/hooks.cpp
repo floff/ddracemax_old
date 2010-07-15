@@ -322,7 +322,7 @@ void mods_message(int msgtype, int client_id)
 				{
 					if(str_comp_nocase(msg->value, option->command) == 0)
 					{
-						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * sv_vote_map_delay)) {
+						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * config.sv_vote_map_delay)) {
 							game.send_chat_target(client_id, "A map was recently voted, try again in a few minutes");
 							return;
 						}
