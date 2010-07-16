@@ -210,8 +210,10 @@ void mods_message(int msgtype, int client_id)
 		
 		if((config.sv_spamprotection && p->last_chat+time_freq() < time_get()) || !config.sv_spamprotection)
 		{
-			if(msg->message[0] == '/')
-			{
+			if(str_length(msg->message)>370)
+			game.send_chat_target(client_id,"Your Message is too long");
+			else if(msg->message[0] == '/')
+			{	
 				if(!str_comp_nocase(msg->message, "/info"))
 				{
 					game.send_chat_target(client_id, "DDRace mod by 3DA");
