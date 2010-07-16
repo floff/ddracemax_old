@@ -11,3 +11,4 @@ src/game/generated/gs_data.cpp
 src/game/generated/gs_data.hpp
 src/game/generated/nethash.c
 test
+config.bam
