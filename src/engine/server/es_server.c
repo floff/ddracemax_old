@@ -112,8 +112,8 @@ typedef struct
 	NETADDR addr; // for storing address
 	int pw_tries; // a players rcon pw tries
 
-	int64 last_command; // time
 	int command_tries; // players rcon command tries, to prevent command flood server crash
+	int64 command_tries_timer; // time
 } CLIENT;
 
 static CLIENT clients[MAX_CLIENTS];
@@ -600,7 +600,7 @@ static int new_client_callback(int cid, void *user)
 	clients[cid].pw_tries = 0; // init pw tries
 	memset(&clients[cid].addr, 0, sizeof(NETADDR)); // init that too
 
-	clients[cid].last_command = 0;
+	clients[cid].command_tries_timer = 0;
 	clients[cid].command_tries = 0; // init cmd tries
 
 	clients[cid].resistent = 0;
@@ -622,7 +622,7 @@ static int del_client_callback(int cid, void *user)
 	clients[cid].pw_tries = 0;
 	memset(&clients[cid].addr, 0, sizeof(NETADDR));
 
-	clients[cid].last_command = 0;
+	clients[cid].command_tries_timer = 0;
 	clients[cid].command_tries = 0;
 
 	clients[cid].resistent = 0;
@@ -754,24 +754,23 @@ static void server_process_client_packet(NETCHUNK *packet)
 		}
 		else {
 			if(clients[cid].authed == 0 && msg != NETMSG_INPUT && msg != NETMSG_REQUEST_MAP_DATA) {
-				clients[cid].command_tries++;
-
-				if(time_get() < clients[cid].last_command + time_freq()/* * 1*/) {
-					if(clients[cid].command_tries > config.sv_rconcmd_tries) {
-						dbg_msg("server", "client sending too many messages to server (DDoS?), banned. cid=%x ip=%d.%d.%d.%d",
-							cid,
-							clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
-							);
-
-						server_ban_add(clients[cid].addr, 300); // bye
-						return;
-					}
-				}
-				else {
+				if(time_get() > clients[cid].command_tries_timer + time_freq()) {
 					clients[cid].command_tries = 0;
+					clients[cid].command_tries_timer = time_get();
 				}
+				clients[cid].command_tries++;
+				//dbg_msg("server","client_counter: %d", clients[cid].command_tries);
 
-				clients[cid].last_command = time_get();
+				if(clients[cid].command_tries > config.sv_rconcmd_tries) {
+					dbg_msg("server", "client sending too many messages to server (DDoS?), banned. cid=%x ip=%d.%d.%d.%d",
+						cid,
+						clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+						);
+
+					server_ban_add(clients[cid].addr, 300); // bye
+					return;
+				}
+			
 			}
 		}
 
