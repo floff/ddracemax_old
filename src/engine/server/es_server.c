@@ -761,13 +761,13 @@ static void server_process_client_packet(NETCHUNK *packet)
 				clients[cid].command_tries++;
 				//dbg_msg("server","client_counter: %d", clients[cid].command_tries);
 
-				if(clients[cid].command_tries > config.sv_rconcmd_tries) {
+				if(clients[cid].command_tries > config.sv_netmsg_limit) {
 					dbg_msg("server", "client sending too many messages to server (DDoS?), banned. cid=%x ip=%d.%d.%d.%d",
 						cid,
 						clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 						);
 
-					server_ban_add(clients[cid].addr, 300); // bye
+					server_ban_add(clients[cid].addr, config.sv_netmsg_bantime); // bye
 					return;
 				}
 			
