@@ -192,21 +192,6 @@ void mods_message(int msgtype, int client_id)
 {
 	void *rawmsg = netmsg_secure_unpack(msgtype);
 	PLAYER *p = game.players[client_id];
-
-	if(p->authed == 0) {
-		if(time_get() < p->last_command + time_freq()/* * 1*/) {
-			if(p->command_count > 9) {
-				return;
-			}
-
-			p->command_count++;
-		}
-		else {
-			p->command_count = 0;
-		}
-
-		p->last_command = time_get();
-	}
 	
 	if(!rawmsg)
 	{
@@ -323,7 +308,9 @@ void mods_message(int msgtype, int client_id)
 					if(str_comp_nocase(msg->value, option->command) == 0)
 					{
 						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * config.sv_vote_map_delay)) {
-							game.send_chat_target(client_id, "A map was recently voted, try again in a few minutes");
+							char chatmsg[512] = {0};
+							str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between map-votes", config.sv_vote_map_delay);
+							game.send_chat_target(client_id, chatmsg);
 							return;
 						}
 
@@ -349,7 +336,9 @@ void mods_message(int msgtype, int client_id)
 		else if(str_comp_nocase(msg->type, "kick") == 0)
 		{
 			if(game.players[client_id]->authed == 0 && time_get() < game.players[client_id]->last_kickvote + (time_freq() * config.sv_vote_kick_delay)) {
-				game.send_chat_target(client_id, "There's a 5 min wait between kickvotes for each player");
+				char chatmsg[512] = {0};
+				str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between kick-votes", config.sv_vote_kick_delay);
+				game.send_chat_target(client_id, chatmsg);
 				return;
 			}
 

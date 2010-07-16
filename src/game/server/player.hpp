@@ -41,8 +41,6 @@ public:
 	int64 last_votecall;
 
 	int64 last_kickvote;
-	int64 last_command;
-	unsigned int command_count;
 
 	//
 	int64 last_chat;
