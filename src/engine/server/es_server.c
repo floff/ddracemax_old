@@ -675,6 +675,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 	{
 		if(sys && msg == NETMSG_INFO)
 		{
+			NETADDR addr;
 			char version[64];
 			const char *password;
 			int i, ipcnt = 0; // ip count
@@ -707,7 +708,6 @@ static void server_process_client_packet(NETCHUNK *packet)
  				return;
  			}
 
-			NETADDR addr;
 			netserver_client_addr(net, cid, &addr);
 			clients[cid].addr = addr; // store the address info
 
