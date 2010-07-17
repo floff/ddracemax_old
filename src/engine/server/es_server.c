@@ -208,14 +208,14 @@ void snap_free_id(int id)
 
 int *server_latestinput(int client_id, int *size)
 {
-	if(client_id < 0 || client_id > MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
+	if(client_id < 0 || client_id >= MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
 		return 0;
 	return clients[client_id].latestinput.data;
 }
 
 const char *server_clientname(int client_id)
 {
-	if(client_id < 0 || client_id > MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
+	if(client_id < 0 || client_id >= MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
 		return "(invalid client)";
 	return clients[client_id].name;
 }
@@ -272,7 +272,7 @@ void server_setclientname(int client_id, const char *name)
 {
 	char nametry[MAX_NAME_LENGTH];
 	int i;
-	if(client_id < 0 || client_id > MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
+	if(client_id < 0 || client_id >= MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
 		return;
 		
 	if(!name)
@@ -293,14 +293,14 @@ void server_setclientname(int client_id, const char *name)
 
 void server_setclientscore(int client_id, int score)
 {
-	if(client_id < 0 || client_id > MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
+	if(client_id < 0 || client_id >= MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
 		return;
 	clients[client_id].score = score;
 }
 
 void server_setclientauthed(int client_id, int level)
 {
-	if(client_id < 0 || client_id > MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
+	if(client_id < 0 || client_id >= MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
 		return;
 	clients[client_id].authed = level;
 }
@@ -1539,7 +1539,7 @@ void server_getip(int client_id,char *buf)
 {
 	NETADDR addr;
 	netserver_client_addr(net, client_id, &addr);
-	if(client_id < 0 || client_id > MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
+	if(client_id < 0 || client_id >= MAX_CLIENTS || clients[client_id].state < SRVCLIENT_STATE_READY)
 		sprintf(buf,"0.0.0.0");
 	sprintf(buf,"%d.%d.%d.%d", addr.ip[0],addr.ip[1], addr.ip[2], addr.ip[3]);
 	return;
