@@ -913,64 +913,71 @@ static void server_process_client_packet(NETCHUNK *packet)
 				
 				if(msg_unpack_error() == 0)
 				{
-					if(config.sv_rcon_password_admin[0] == 0 && config.sv_rcon_password_moder[0] == 0 && config.sv_rcon_password_helper[0] == 0)
-					{
-						server_send_rcon_line(cid, "No rcon password set on server. Set sv_rcon_password_admin to enable the remote console.");
-					}
-					else if(config.sv_rcon_password_admin[0] != 0 && strcmp(pw, config.sv_rcon_password_admin) == 0)
-					{
-						msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
-						msg_pack_int(1);
-						msg_pack_end();
-						server_send_msg(cid);
-						
-						clients[cid].authed = 3;
-						mods_set_authed(cid, clients[cid].authed);
-						server_send_rcon_line(cid, "Authentication successful. Logined as Admin. Remote console access granted.");
-						dbg_msg("server", "cid=%d authed as Admin", cid);
-
-						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
-					}
-					else if(config.sv_rcon_password_moder[0] != 0 && strcmp(pw, config.sv_rcon_password_moder) == 0)
-					{
-						msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
-						msg_pack_int(1);
-						msg_pack_end();
-						server_send_msg(cid);
-						
-						clients[cid].authed = 2;
-						mods_set_authed(cid, clients[cid].authed);
-						server_send_rcon_line(cid, "Authentication successful. Logined as Moderator. Remote console access granted.");
-						dbg_msg("server", "cid=%d authed as Moderator", cid);
-
-						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
-					}
-					else if(config.sv_rcon_password_helper[0] != 0 && strcmp(pw, config.sv_rcon_password_helper) == 0)
-					{
-						msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
-						msg_pack_int(1);
-						msg_pack_end();
-						server_send_msg(cid);
-							
-						clients[cid].authed = 1;
-						mods_set_authed(cid, clients[cid].authed);
-						server_send_rcon_line(cid, "Authentication successful. Logined as Helper. Remote console access granted.");
-						dbg_msg("server", "cid=%d authed as Helper", cid);
-
-						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
-					}
-					else
-					{
-						if(++clients[cid].pw_tries > config.sv_rcon_tries) { // too many rcon pw tries
-							dbg_msg("server", "client tried bruteforce rcon, automated ban. cid=%x ip=%d.%d.%d.%d",
-								cid,
-								clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
-								);
-
-							server_ban_add(clients[cid].addr, config.sv_rcon_tries_bantime); // bye
+					if(pw[0] != 0) {
+						if(config.sv_rcon_password_admin[0] == 0 && config.sv_rcon_password_moder[0] == 0 && config.sv_rcon_password_helper[0] == 0)
+						{
+							server_send_rcon_line(cid, "No rcon password set on server. Set sv_rcon_password_admin to enable the remote console.");
 						}
+						else if(strcmp(pw, config.sv_rcon_password_admin) == 0)
+						{
+							msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
+							msg_pack_int(1);
+							msg_pack_end();
+							server_send_msg(cid);
+						
+							clients[cid].authed = 3;
+							mods_set_authed(cid, clients[cid].authed);
+							server_send_rcon_line(cid, "Authentication successful. Logined as Admin. Remote console access granted.");
+							dbg_msg("server", "cid=%d authed as Admin", cid);
 
-						server_send_rcon_line(cid, "Wrong password.");
+							clients[cid].pw_tries = 0; // not really necessary, but as a reminder
+						}
+						else if(strcmp(pw, config.sv_rcon_password_moder) == 0)
+						{
+							msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
+							msg_pack_int(1);
+							msg_pack_end();
+							server_send_msg(cid);
+						
+							clients[cid].authed = 2;
+							mods_set_authed(cid, clients[cid].authed);
+							server_send_rcon_line(cid, "Authentication successful. Logined as Moderator. Remote console access granted.");
+							dbg_msg("server", "cid=%d authed as Moderator", cid);
+
+							clients[cid].pw_tries = 0; // not really necessary, but as a reminder
+						}
+						else if(strcmp(pw, config.sv_rcon_password_helper) == 0)
+						{
+							msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
+							msg_pack_int(1);
+							msg_pack_end();
+							server_send_msg(cid);
+							
+							clients[cid].authed = 1;
+							mods_set_authed(cid, clients[cid].authed);
+							server_send_rcon_line(cid, "Authentication successful. Logined as Helper. Remote console access granted.");
+							dbg_msg("server", "cid=%d authed as Helper", cid);
+
+							clients[cid].pw_tries = 0; // not really necessary, but as a reminder
+						}
+						else
+						{
+							if(++clients[cid].pw_tries > config.sv_rcon_tries) { // too many rcon pw tries
+								dbg_msg("server", "client tried bruteforce rcon, automated ban. cid=%x ip=%d.%d.%d.%d",
+									cid,
+									clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+									);
+
+								server_ban_add(clients[cid].addr, config.sv_rcon_tries_bantime); // bye
+							}
+
+							server_send_rcon_line(cid, "Wrong password.");
+						}
+					} else {
+						dbg_msg("server", "client tried to authenticate with empty password. cid=%x ip=%d.%d.%d.%d",
+							cid,
+							clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+							);
 					}
 				}
 			}
