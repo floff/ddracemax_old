@@ -917,7 +917,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 					{
 						server_send_rcon_line(cid, "No rcon password set on server. Set sv_rcon_password_admin to enable the remote console.");
 					}
-					else if(strcmp(pw, config.sv_rcon_password_admin) == 0)
+					else if(config.sv_rcon_password_admin[0] != 0 && strcmp(pw, config.sv_rcon_password_admin) == 0)
 					{
 						msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
 						msg_pack_int(1);
@@ -931,7 +931,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 
 						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
 					}
-					else if(strcmp(pw, config.sv_rcon_password_moder) == 0)
+					else if(config.sv_rcon_password_moder[0] != 0 && strcmp(pw, config.sv_rcon_password_moder) == 0)
 					{
 						msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
 						msg_pack_int(1);
@@ -945,7 +945,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 
 						clients[cid].pw_tries = 0; // not really necessary, but as a reminder
 					}
-					else if(strcmp(pw, config.sv_rcon_password_helper) == 0)
+					else if(config.sv_rcon_password_helper[0] != 0 && strcmp(pw, config.sv_rcon_password_helper) == 0)
 					{
 						msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
 						msg_pack_int(1);
