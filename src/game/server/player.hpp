@@ -87,6 +87,15 @@ public:
 	int besttick;
 	int lasttick;
 	float bestLap;
+	
+	// afk timer
+	void afk_timer(int new_target_x, int new_target_y);
+	int64 last_playtime;
+	int last_target_x;
+	int last_target_y;
+	int sent_afk_warning; // afk timer's 1st warning after 50% of sv_max_afk_time
+	int sent_afk_warning2; // afk timer's 2nd warning after 90% of sv_max_afk_time
+	char afk_msg[160];
 
 
 };

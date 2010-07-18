@@ -8,6 +8,7 @@ MACRO_CONFIG_INT(sv_vote_kick_delay,300,0,9999,CFGFLAG_SERVER,"how much time bet
 MACRO_CONFIG_INT(sv_vote_map_delay,600,0,9999,CFGFLAG_SERVER,"how much time between map votes")
 MACRO_CONFIG_INT(sv_netmsg_limit, 20, 0, 100, CFGFLAG_SERVER, "How Many unauthed Command Tries Before ban")
 MACRO_CONFIG_INT(sv_netmsg_bantime, 300, 0, 9999, CFGFLAG_SERVER, "How Much time will the unauthed rcon command spammer will be banned")
+MACRO_CONFIG_INT(sv_max_afk_time, 0, 0, 9999, CFGFLAG_SERVER, "How many seconds a player is allowed to be afk, 0=disabled")
 MACRO_CONFIG_STR(player_name, 32, "nameless tee", CFGFLAG_SAVE|CFGFLAG_CLIENT, "Name of the player")
 MACRO_CONFIG_STR(clan_name, 32, "", CFGFLAG_SAVE|CFGFLAG_CLIENT, "(not used)")
 MACRO_CONFIG_STR(password, 32, "", CFGFLAG_CLIENT, "Password to the server")
