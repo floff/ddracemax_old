@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <game/version.hpp>
 #include <base/system.h>
 
 #include <engine/e_server_interface.h>
@@ -42,7 +42,7 @@ void engine_init(const char *appname)
 {
 	dbg_logger_stdout();
 	dbg_logger_debugger();
-	
+	dbg_msg("About","DDrace Mod initially By 3DA \nVersion:%s",RACE_VERSION);
 	/* */
 	dbg_msg("engine", "running on %s-%s-%s", CONF_FAMILY_STRING, CONF_PLATFORM_STRING, CONF_ARCH_STRING);
 #ifdef CONF_ARCH_ENDIAN_LITTLE

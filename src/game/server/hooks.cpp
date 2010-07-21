@@ -218,7 +218,8 @@ void mods_message(int msgtype, int client_id)
 				{
 					game.send_chat_target(client_id, "DDRace mod by 3DA");
 					game.send_chat_target(client_id,"Version: " RACE_VERSION);
-					game.send_chat_target(client_id, "Visit: ddm.ucoz.net");
+					game.send_chat_target(client_id, "Visit: http://fluxid.pl/teeworlds/ddrace2/");
+					game.send_chat_target(client_id, "or Visit: http://github.com/fluxid/ddrace");
 				}
 				else if(!strncmp(msg->message, "/top5", 5) && !config.sv_championship) 
 				{

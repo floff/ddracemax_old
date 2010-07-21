@@ -1,5 +1,6 @@
 #include <string.h>
 #include <new>
+#include <engine/e_config.h>
 #include <engine/e_server_interface.h>
 #include "gamecontext.hpp"
 
@@ -354,9 +355,26 @@ void GAMECONTEXT::tick()
 		
 			if(vote_enforce == VOTE_ENFORCE_YES || yes >= total/2+1 || (time_get() > vote_closetime && yes>no))
 			{
-				console_execute_line(vote_command, 3,-1);
-				end_vote();
-				send_chat(-1, GAMECONTEXT::CHAT_ALL, "Vote passed");
+				bool kicked=false;
+				for(int i = 0; i < MAX_CLIENTS; i++)
+				{
+					char buf[11];
+					str_format(buf, sizeof(buf), "ban %d %d", i,config.sv_vote_kick_bantime);
+					if (vote_command == buf)
+						if (players[i]->authed==0)
+							{
+								console_execute_line(vote_command, 4,-1);
+								end_vote();
+								send_chat(-1, GAMECONTEXT::CHAT_ALL, "Vote passed");
+								kicked=true;
+							}
+				}
+				if (!kicked)
+				{
+					end_vote();
+					send_chat(-1, GAMECONTEXT::CHAT_ALL, "Vote failed can't kick authenticated users.");
+				}
+				
 			
 				if(players[vote_creator])
 					players[vote_creator]->last_votecall = 0;
