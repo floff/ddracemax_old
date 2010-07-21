@@ -736,7 +736,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 			{
 				dbg_msg("server", "player dropped, too many connections. cid=%x ip=%d.%d.%d.%d",
 					cid,
-					clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+					addr.ip[0], addr.ip[1], addr.ip[2], addr.ip[3]
 					);
 
 				netserver_drop(net, cid, "Too many connections");
