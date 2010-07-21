@@ -5,7 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-
+#include <engine/e_console.h>
 /*#include "detect.h"*/
 #include "system.h"
 /*#include "e_console.h"*/
@@ -57,6 +57,7 @@ IOHANDLE io_stderr() { return (IOHANDLE)stderr; }
 
 static DBG_LOGGER loggers[16];
 static int num_loggers = 0;
+int lastprnt=0;
 
 static NETSTATS network_stats = {0};
 static MEMSTATS memory_stats = {0};
@@ -100,7 +101,16 @@ void dbg_msg(const char *sys, const char *fmt, ...)
 	va_end(args);
 	
 	for(i = 0; i < num_loggers; i++)
-		loggers[i](str);
+		if (loggers[i]==console_print)
+			{
+			if (((int)time(0)-lastprnt)>5)
+				{
+					loggers[i](str);
+					lastprnt = (int)time(0);
+				}
+			}
+		else
+			loggers[i](str);
 }
 
 static void logger_stdout(const char *line)
