@@ -348,10 +348,17 @@ void mods_message(int msgtype, int client_id)
 		}
 		else if(str_comp_nocase(msg->type, "kick") == 0)
 		{
-			if(game.players[client_id]->authed == 0 && time_get() < game.players[client_id]->last_kickvote + (time_freq() * config.sv_vote_kick_delay)) {
+			if(game.players[client_id]->authed == 0 && time_get() < game.players[client_id]->last_kickvote + (time_freq() * 5)) 
+			return;
+			else if(game.players[client_id]->authed == 0 && time_get() < game.players[client_id]->last_kickvote + (time_freq() * config.sv_vote_kick_delay)) 
+			{
 				char chatmsg[512] = {0};
-				str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between kick-votes", config.sv_vote_kick_delay);
+				str_format(chatmsg, sizeof(chatmsg), "There's a %d second waittime between kickvotes for each player please wait %d second(s)",
+				config.sv_vote_kick_delay,
+				((game.players[client_id]->last_kickvote+(config.sv_vote_kick_delay*time_freq()))/time_freq())-(time_get()/time_freq())
+				);
 				game.send_chat_target(client_id, chatmsg);
+				game.players[client_id]->last_kickvote = time_get();
 				return;
 			}
 
