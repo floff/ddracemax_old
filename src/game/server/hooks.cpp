@@ -315,21 +315,23 @@ void mods_message(int msgtype, int client_id)
 			if (config.sv_votes==1)
 			{
 				VOTEOPTION *option = voteoption_first;
-				static int64 last_mapvote = 0;
+				static int64 last_mapvote = 0; //floff
 				while(option)
 				{
 					if(str_comp_nocase(msg->value, option->command) == 0)
-					{
-						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * config.sv_vote_map_delay)) {
+					{	
+						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * config.sv_vote_map_delay))
+						{	
 							char chatmsg[512] = {0};
-							str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between map-votes", config.sv_vote_map_delay);
+							str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between map-votes,Please wait %d Second(s)",config.sv_vote_map_delay,((last_mapvote+(config.sv_vote_map_delay*time_freq()))/time_freq())-(time_get()/time_freq()));
 							game.send_chat_target(client_id, chatmsg);
+							
 							return;
 						}
-
 						str_format(chatmsg, sizeof(chatmsg), "%s called vote to change server option '%s'", server_clientname(client_id), option->command);
 						str_format(desc, sizeof(desc), "%s", option->command);
 						str_format(cmd, sizeof(cmd), "%s", option->command);
+						last_mapvote = time_get();
 						break;
 					}
 
@@ -342,8 +344,6 @@ void mods_message(int msgtype, int client_id)
 					game.send_chat_target(client_id, chatmsg);
 					return;
 				}
-
-				last_mapvote = time_get();
 			}
 		}
 		else if(str_comp_nocase(msg->type, "kick") == 0)
