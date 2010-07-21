@@ -93,7 +93,17 @@ void mods_client_direct_input(int client_id, void *input)
 void mods_set_authed(int client_id, int status)
 {
 	if(game.players[client_id])
+	{
 		game.players[client_id]->authed = status;
+		char buf[11];
+		str_format(buf, sizeof(buf), "ban %d %d", client_id,config.sv_vote_kick_bantime);
+		dbg_msg("hooks","%d",game.vote_command == buf);
+		if ( !strcmp(game.vote_command,buf))
+		{
+			game.vote_enforce = GAMECONTEXT::VOTE_ENFORCE_NO;
+			dbg_msg("hooks","Aborting vote");
+		}
+	}
 }
 
 void mods_set_resistent(int client_id, int status)
