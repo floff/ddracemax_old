@@ -355,7 +355,10 @@ void GAMECONTEXT::tick()
 		
 			if(vote_enforce == VOTE_ENFORCE_YES || yes >= total/2+1 || (time_get() > vote_closetime && yes>no))
 			{
-				bool kicked=false;
+				console_execute_line(vote_command, 3,-1);
+				end_vote();
+				send_chat(-1, GAMECONTEXT::CHAT_ALL, "Vote passed");
+				/* bool kicked=false;  //I fucked up :D
 				for(int i = 0; i < MAX_CLIENTS; i++)
 				{
 					char buf[11];
@@ -375,7 +378,7 @@ void GAMECONTEXT::tick()
 					send_chat(-1, GAMECONTEXT::CHAT_ALL, "Vote failed can't kick authenticated users.");
 				}
 				
-			
+			 */
 				if(players[vote_creator])
 					players[vote_creator]->last_votecall = 0;
 			}
