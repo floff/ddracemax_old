@@ -323,7 +323,7 @@ void mods_message(int msgtype, int client_id)
 						if(game.players[client_id]->authed == 0 && strncmp(option->command, "sv_map ", 7) == 0 && time_get() < last_mapvote + (time_freq() * config.sv_vote_map_delay))
 						{	
 							char chatmsg[512] = {0};
-							str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between map-votes,Please wait %d Second(s)",config.sv_vote_map_delay,((last_mapvote+(config.sv_vote_map_delay*time_freq()))/time_freq())-(time_get()/time_freq()));
+							str_format(chatmsg, sizeof(chatmsg), "There's a %d second delay between map-votes. Please wait %d second(s).",config.sv_vote_map_delay,((last_mapvote+(config.sv_vote_map_delay*time_freq()))/time_freq())-(time_get()/time_freq()));
 							game.send_chat_target(client_id, chatmsg);
 							
 							return;
@@ -353,7 +353,7 @@ void mods_message(int msgtype, int client_id)
 			else if(game.players[client_id]->authed == 0 && time_get() < game.players[client_id]->last_kickvote + (time_freq() * config.sv_vote_kick_delay)) 
 			{
 				char chatmsg[512] = {0};
-				str_format(chatmsg, sizeof(chatmsg), "There's a %d second waittime between kickvotes for each player please wait %d second(s)",
+				str_format(chatmsg, sizeof(chatmsg), "There's a %d second wait time between kickvotes for each player. Please wait %d second(s).",
 				config.sv_vote_kick_delay,
 				((game.players[client_id]->last_kickvote+(config.sv_vote_kick_delay*time_freq()))/time_freq())-(time_get()/time_freq())
 				);
