@@ -3,12 +3,29 @@
 /*
 	Title: OS Abstraction
 */
-
+#include "detect.h"
 #ifndef BASE_SYSTEM_H
 #define BASE_SYSTEM_H
 
-#include "stdint.h"
-#include "detect.h"
+#if defined(CONF_FAMILY_WINDOWS)
+	#include "stdint.h"
+#endif
+#if defined(CONF_FAMILY_UNIX)
+	#include <stdint.h>
+#endif
+#if defined(CONF_PLATFORM_MACOSX)
+#include <MacTypes.h>
+
+typedef SInt8	int8_t;
+typedef UInt8	uint8_t;
+typedef SInt16	int16_t;
+typedef UInt16	uint16_t;
+typedef SInt32	int32_t;
+typedef UInt32	uint32_t;
+typedef SInt64	int64_t;
+typedef UInt64	uint64_t;
+typedef unsigned long	uintptr_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

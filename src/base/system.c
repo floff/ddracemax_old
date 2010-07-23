@@ -42,7 +42,6 @@
 	#include <fcntl.h>
 	#include <direct.h>
 	#include <errno.h>
-	#include "stdint.h"
 	#define EWOULDBLOCK WSAEWOULDBLOCK
 #else
 	#error NOT IMPLEMENTED
