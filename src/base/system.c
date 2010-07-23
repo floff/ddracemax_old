@@ -5,9 +5,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <engine/e_console.h>
+
 /*#include "detect.h"*/
 #include "system.h"
+#include "errno.h"
 /*#include "e_console.h"*/
 
 #if defined(CONF_FAMILY_UNIX)
@@ -41,7 +42,7 @@
 	#include <fcntl.h>
 	#include <direct.h>
 	#include <errno.h>
-
+	#include "stdint.h"
 	#define EWOULDBLOCK WSAEWOULDBLOCK
 #else
 	#error NOT IMPLEMENTED
@@ -57,7 +58,6 @@ IOHANDLE io_stderr() { return (IOHANDLE)stderr; }
 
 static DBG_LOGGER loggers[16];
 static int num_loggers = 0;
-int lastprnt=0;
 
 static NETSTATS network_stats = {0};
 static MEMSTATS memory_stats = {0};
@@ -101,16 +101,7 @@ void dbg_msg(const char *sys, const char *fmt, ...)
 	va_end(args);
 	
 	for(i = 0; i < num_loggers; i++)
-		if (loggers[i]==console_print)
-			{
-			if (((int)time(0)-lastprnt)>5)
-				{
-					loggers[i](str);
-					lastprnt = (int)time(0);
-				}
-			}
-		else
-			loggers[i](str);
+		loggers[i](str);
 }
 
 static void logger_stdout(const char *line)
@@ -677,26 +668,38 @@ NETSOCKET net_udp_create(NETADDR bindaddr)
 	return sock;
 }
 
-int net_udp_send(NETSOCKET sock, const NETADDR *addr, const void *data, int size)
+int
+net_udp_send(
+	NETSOCKET       sock,
+	const NETADDR   *addr,
+	const void      *data,
+	int32_t         size )
 {
 	struct sockaddr sa;
-	int d;
-	mem_zero(&sa, sizeof(sa));
-	netaddr_to_sockaddr(addr, &sa);
-	d = sendto((int)sock, (const char*)data, size, 0, &sa, sizeof(sa));
-	/*if(d < 0)
-	{
-		char addrstr[256];
-		net_addr_str(addr, addrstr, sizeof(addrstr));
+	int32_t         d;
+	
+	mem_zero( &sa, sizeof( sa ) );
+	netaddr_to_sockaddr( addr, &sa );
+	
+	if ( ( d = sendto( (int)sock, (const char*)data, size, 0, &sa, sizeof( sa ) ) ) < 0 ) {
+		int32_t err_num = errno;
+		char    char_buffer[256];
 		
-		dbg_msg("net", "sendto error %d %x", d, d);
-		dbg_msg("net", "\tsock = %d %x", sock, sock);
-		dbg_msg("net", "\tsize = %d %x", size, size);
-		dbg_msg("net", "\taddr = %s", addrstr);
+		dbg_msg( "net", "sendto error %d %x", d, d );
+		dbg_msg( "net", "\tsock = %d %x", sock, sock );
+		dbg_msg( "net", "\tsize = %d %x", size, size );
 
-	}*/
-	network_stats.sent_bytes += size;
-	network_stats.sent_packets++;
+		net_addr_str( addr, char_buffer, sizeof( char_buffer ) );
+		dbg_msg( "net", "\taddr = %s", char_buffer );
+		
+		dbg_msg( "net", "\terr  = '%d:%s'", err_num, strerror(
+			err_num ) );
+	
+	} else {
+		network_stats.sent_bytes += size;
+		network_stats.sent_packets++;
+	}
+	
 	return d;
 }
 

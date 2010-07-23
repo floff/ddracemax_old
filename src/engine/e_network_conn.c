@@ -67,21 +67,27 @@ void conn_want_resend(NETCONNECTION *conn)
 	conn->construct.flags |= NET_PACKETFLAG_RESEND;
 }
 
-int conn_flush(NETCONNECTION *conn)
+int32_t
+conn_flush(
+	NETCONNECTION *conn )
 {
-	int num_chunks = conn->construct.num_chunks;
-	if(!num_chunks && !conn->construct.flags)
+	int32_t num_chunks = conn->construct.num_chunks;
+
+	if ( !num_chunks && !conn->construct.flags )
 		return 0;
 
 	/* send of the packets */	
 	conn->construct.ack = conn->ack;
-	send_packet(conn->socket, &conn->peeraddr, &conn->construct);
+	if ( send_packet( conn->socket, &conn->peeraddr, &conn->construct ) < 0 ) {
+		conn->state = NET_CONNSTATE_ERROR;
+		conn_set_error( conn, "send error" );
+	}
 	
 	/* update send times */
-	conn->last_send_time = time_get();
+	conn->last_send_time = time_get( );
 	
 	/* clear construct so we can start building a new package */
-	mem_zero(&conn->construct, sizeof(conn->construct));
+	mem_zero( &conn->construct, sizeof( conn->construct ) );
 	return num_chunks;
 }
 

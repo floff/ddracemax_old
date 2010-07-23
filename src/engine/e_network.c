@@ -141,59 +141,71 @@ int netcommon_decompress(const void *data, int data_size, void *output, int outp
 	return huffman_decompress(&huffmanstate, data, data_size, output, output_size);
 }
 
-void send_packet(NETSOCKET socket, NETADDR *addr, NETPACKETCONSTRUCT *packet)
+int32_t
+send_packet(
+	NETSOCKET          socket,
+	NETADDR            *addr,
+	NETPACKETCONSTRUCT *packet )
 {
-	unsigned char buffer[NET_MAX_PACKETSIZE];
-	int compressed_size = -1;
-	int final_size = -1;
+	unsigned char send_buffer[NET_MAX_PACKETSIZE];
+	int32_t       compressed_size = -1;
+	int32_t       final_size      = -1;
 
 	/* log the data */
-	if(datalog_sent)
-	{
+	if( datalog_sent ) {
 		int type = 1;
-		io_write(datalog_sent, &type, sizeof(type));
-		io_write(datalog_sent, &packet->data_size, sizeof(packet->data_size));
-		io_write(datalog_sent, &packet->chunk_data, packet->data_size);
-		io_flush(datalog_sent);
+		
+		io_write( datalog_sent, &type, sizeof( type ) );
+		io_write( datalog_sent, &packet->data_size, sizeof( packet->data_size ) );
+		io_write( datalog_sent, &packet->chunk_data, packet->data_size );
+		io_flush( datalog_sent );
 	}
 	
 	/* compress if its enabled */
-	if(COMPRESSION)
-		compressed_size = huffman_compress(&huffmanstate, packet->chunk_data, packet->data_size, &buffer[3], NET_MAX_PACKETSIZE-4);
+	if ( COMPRESSION ) {
+		compressed_size = huffman_compress( &huffmanstate, packet->chunk_data,
+			packet->data_size, &send_buffer[3], NET_MAX_PACKETSIZE - 4 );
+	}
 
 	/* check if the compression was enabled, successful and good enough	*/
-	if(compressed_size > 0 && compressed_size < packet->data_size)
-	{
+	if ( ( compressed_size > 0 ) && ( compressed_size < packet->data_size ) ) {
+		/* use compressed data */
 		final_size = compressed_size;
 		packet->flags |= NET_PACKETFLAG_COMPRESSION;
-	}
-	else
-	{
+
+	} else {
 		/* use uncompressed data */
 		final_size = packet->data_size;
-		mem_copy(&buffer[3], packet->chunk_data, packet->data_size);
+		mem_copy( &send_buffer[3], packet->chunk_data, packet->data_size );
+		
 		packet->flags &= ~NET_PACKETFLAG_COMPRESSION;
 	}
 
 	/* set header and send the packet if all things are good */
-	if(final_size >= 0)
-	{
+	if ( final_size >= 0 ) {
+		int32_t result_val;
+		
 		final_size += NET_PACKETHEADERSIZE;
-		buffer[0] = ((packet->flags<<4)&0xf0)|((packet->ack>>8)&0xf);
-		buffer[1] = packet->ack&0xff;
-		buffer[2] = packet->num_chunks;
-		net_udp_send(socket, addr, buffer, final_size);
+		send_buffer[0] = ((packet->flags<<4)&0xf0)|((packet->ack>>8)&0xf);
+		send_buffer[1] = packet->ack&0xff;
+		send_buffer[2] = packet->num_chunks;
+
+		result_val = net_udp_send( socket, addr, send_buffer, final_size );
 
 		/* log raw socket data */
-		if(datalog_sent)
-		{
+		if(datalog_sent) {
 			int type = 0;
-			io_write(datalog_sent, &type, sizeof(type));
-			io_write(datalog_sent, &final_size, sizeof(final_size));
-			io_write(datalog_sent, buffer, final_size);
-			io_flush(datalog_sent);
+			
+			io_write( datalog_sent, &type, sizeof( type ) );
+			io_write( datalog_sent, &final_size, sizeof( final_size ) );
+			io_write( datalog_sent, send_buffer, final_size );
+			io_flush( datalog_sent );
 		}
+
+		return result_val;
 	}
+
+	return 0;
 }
 
 /* TODO: rename this function */

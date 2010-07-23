@@ -7,6 +7,7 @@
 #ifndef BASE_SYSTEM_H
 #define BASE_SYSTEM_H
 
+#include "stdint.h"
 #include "detect.h"
 
 #ifdef __cplusplus
@@ -529,7 +530,12 @@ NETSOCKET net_udp_create(NETADDR bindaddr);
 		On success it returns the number of bytes sent. Returns -1
 		on error.
 */
-int net_udp_send(NETSOCKET sock, const NETADDR *addr, const void *data, int size);
+int32_t
+net_udp_send(
+	NETSOCKET       sock,
+	const NETADDR   *addr,
+	const void      *data,
+	int32_t         size );
 
 /*
 	Function: net_udp_recv

@@ -761,7 +761,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 				clients[cid].command_tries++;
 				//dbg_msg("server","client_counter: %d", clients[cid].command_tries);
 
-				if(clients[cid].command_tries > config.sv_netmsg_limit) {
+				if(clients[cid].command_tries > config.sv_netmsg_limit && config.sv_netmsg_limit!=0) {
 					dbg_msg("server", "client sending too many messages to server (DDoS?), banned. cid=%x ip=%d.%d.%d.%d",
 						cid,
 						clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]

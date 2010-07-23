@@ -12,3 +12,9 @@ src/game/generated/gs_data.hpp
 src/game/generated/nethash.c
 test
 config.bam
+bam
+bam/*.*
+objs/*.obj
+/autoexec.cfg
+/build server.bat
+/ddrace_srv.exe

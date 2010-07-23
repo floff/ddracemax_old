@@ -150,7 +150,13 @@ int recvinfo_fetch_chunk(NETRECVINFO *info, NETCHUNK *chunk);
 int seq_in_backroom(int seq, int ack);
 void send_controlmsg(NETSOCKET socket, NETADDR *addr, int ack, int controlmsg, const void *extra, int extra_size);
 void send_packet_connless(NETSOCKET socket, NETADDR *addr, const void *data, int data_size);
-void send_packet(NETSOCKET socket, NETADDR *addr, NETPACKETCONSTRUCT *packet);
+
+int32_t
+send_packet(
+	NETSOCKET          socket,
+	NETADDR            *addr,
+	NETPACKETCONSTRUCT *packet );
+
 int unpack_packet(unsigned char *buffer, int size, NETPACKETCONSTRUCT *packet);
 unsigned char *pack_chunk_header(unsigned char *data, int flags, int size, int sequence);
 unsigned char *unpack_chunk_header(unsigned char *data, NETCHUNKHEADER *header);
