@@ -767,7 +767,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 						clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 						);
 
-					server_ban_add(clients[cid].addr, config.sv_netmsg_bantime); // bye
+					server_ban_add(clients[cid].addr, config.sv_netmsg_bantime, "exceeding netmsg_limit, Bye"); // bye
 					return;
 				}
 			
@@ -968,7 +968,7 @@ static void server_process_client_packet(NETCHUNK *packet)
 									clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
 									);
 
-								server_ban_add(clients[cid].addr, config.sv_rcon_tries_bantime); // bye
+								server_ban_add(clients[cid].addr, config.sv_rcon_tries_bantime, "exceeding rcon password tries, Bye"); // bye
 							}
 
 							server_send_rcon_line(cid, "Wrong password.");
@@ -1017,9 +1017,9 @@ static void server_process_client_packet(NETCHUNK *packet)
 }
 
 
-int server_ban_add(NETADDR addr, int seconds)
+int server_ban_add(NETADDR addr, int seconds,const char *reason)
 {
-	return netserver_ban_add(net, addr, seconds);	
+	return netserver_ban_add(net, addr, seconds, reason);
 }
 
 int server_ban_remove(NETADDR addr)
@@ -1385,15 +1385,26 @@ static int str_allnum(const char *str)
 static void con_ban(void *result, void *user_data, int cid)
 {
 	NETADDR addr;
-	char addrstr[128];
+	char addrstr[128],bufz[100];
 	const char *str = console_arg_string(result, 0);
-	int seconds = 10;
-	
+	int seconds = 300,jkl;
+	str_format(bufz, sizeof(bufz), "");
 	if(console_arg_num(result) > 1)
 		seconds = console_arg_int(result, 1);
 	
+	 if(console_arg_num(result) > 2)
+	{
+		for (jkl=2;jkl<=console_arg_num(result);jkl++)
+		{
+			strcat(bufz,console_arg_string(result,jkl));
+			strcat(bufz," ");
+		}
+	}
+	else
+	str_format(bufz, sizeof(bufz), "no reason given"); 
+
 	if(net_addr_from_str(&addr, str) == 0)
-		server_ban_add(addr, seconds);
+		server_ban_add(addr, seconds, bufz);
 	else if(str_allnum(str))
 	{
 		NETADDR addr;
@@ -1401,19 +1412,19 @@ static void con_ban(void *result, void *user_data, int cid)
 		if (cid != -1 && clients[cid].authed<=clients[cid1].authed)
 			return;
 
-		if(cid1 < 0 || cid1 >= MAX_CLIENTS || clients[cid1].state == SRVCLIENT_STATE_EMPTY)
+		if(cid1 < 0 || cid1 >= MAX_CLIENTS || clients[cid1].state == SRVCLIENT_STATE_EMPTY) // added >= for ban client 16 bug
 		{
 			dbg_msg("server", "invalid client id");
 			return;
 		}
 
 		netserver_client_addr(net, cid1, &addr);
-		server_ban_add(addr, seconds);
+		server_ban_add(addr, seconds,bufz);
 	}
-	
+
 	addr.port = 0;
 	net_addr_str(&addr, addrstr, sizeof(addrstr));
-	
+
 	if(seconds)
 		dbg_msg("server", "banned %s for %d seconds", addrstr, seconds);
 	else
@@ -1500,7 +1511,7 @@ static void con_stoprecord(void *result, void *user_data, int cid)
 static void server_register_commands()
 {
 	MACRO_REGISTER_COMMAND("kick", "i", CFGFLAG_SERVER, con_kick, 0, "",2);
-	MACRO_REGISTER_COMMAND("ban", "s?i", CFGFLAG_SERVER, con_ban, 0, "",2);
+	MACRO_REGISTER_COMMAND("ban", "s?i?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s?s", CFGFLAG_SERVER, con_ban, 0, "",2);
 	MACRO_REGISTER_COMMAND("unban", "s", CFGFLAG_SERVER, con_unban, 0, "",3);
 	MACRO_REGISTER_COMMAND("bans", "", CFGFLAG_SERVER, con_bans, 0, "",2);
 	MACRO_REGISTER_COMMAND("status", "", CFGFLAG_SERVER, con_status, 0, "",1);

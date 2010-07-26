@@ -2,6 +2,7 @@
 
 /* TODO: remove this */
 #include "../game/variables.hpp"
+MACRO_CONFIG_INT(sv_reconnect_time,5,0,9999,CFGFLAG_SERVER,"how much time between leaves and joines")
 MACRO_CONFIG_INT(sv_rcon_tries, 5, 0, 100, CFGFLAG_SERVER, "How Many Password Tries Before ban")
 MACRO_CONFIG_INT(sv_rcon_tries_bantime, 300, 0, 9999, CFGFLAG_SERVER, "How Much time will the brute rcon password attacker will be banned")
 MACRO_CONFIG_INT(sv_vote_kick_delay,300,0,9999,CFGFLAG_SERVER,"how much time between kick votes")

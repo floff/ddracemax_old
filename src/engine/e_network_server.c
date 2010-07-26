@@ -1,4 +1,5 @@
 #include <base/system.h>
+#include <engine/e_config.h>
 #include "e_network.h"
 #include "e_network_internal.h"
 
@@ -115,10 +116,12 @@ int netserver_close(NETSERVER *s)
 }
 
 int netserver_drop(NETSERVER *s, int client_id, const char *reason)
-{
+{	
 	/* TODO: insert lots of checks here */
 	NETADDR addr;
+	char bufz[100];
 	netserver_client_addr(s, client_id, &addr);
+	str_format(bufz,sizeof(bufz),"trying to connect so soon");
 	
 	dbg_msg("net_server", "client dropped. cid=%d ip=%d.%d.%d.%d reason=\"%s\"",
 		client_id,
@@ -129,9 +132,79 @@ int netserver_drop(NETSERVER *s, int client_id, const char *reason)
 	if(s->del_client)
 		s->del_client(client_id, s->user_ptr);
 	conn_disconnect(&s->slots[client_id].conn, reason);
+	netserver_ban_add_nodrop(s, addr, config.sv_reconnect_time, bufz);
+	return 0;
+}
 
-
+int netserver_ban_add_nodrop(NETSERVER *s, NETADDR addr, int seconds, const char *reason)
+{
+	int iphash = (addr.ip[0]+addr.ip[1]+addr.ip[2]+addr.ip[3])&0xff;
+	unsigned stamp = 0xffffffff;
+	NETBAN *ban;
+	/* remove the port */
+	addr.port = 0;
+	
+	if(seconds)
+		stamp = time_timestamp() + seconds;
 		
+	/* search to see if it already exists */
+	ban = s->bans[iphash];
+	MACRO_LIST_FIND(ban, hashnext, net_addr_comp(&ban->info.addr, &addr) == 0);
+	if(ban)
+	{
+		/* adjust the ban */
+		if (ban->info.expires>seconds)
+			return 0;
+		ban->info.expires = stamp;
+		strcpy(ban->info.reason,reason);
+		return 0;
+	}
+	
+	if(!s->banpool_firstfree)
+		return -1;
+
+	/* fetch and clear the new ban */
+	ban = s->banpool_firstfree;
+	MACRO_LIST_UNLINK(ban, s->banpool_firstfree, prev, next);
+	
+	/* setup the ban info */
+	ban->info.expires = stamp;
+	ban->info.addr = addr;
+	strcpy(ban->info.reason,reason);
+	/* add it to the ban hash */
+	MACRO_LIST_LINK_FIRST(ban, s->bans[iphash], hashprev, hashnext);
+	
+	/* insert it into the used list */
+	{
+		if(s->banpool_firstused)
+		{
+			NETBAN *insert_after = s->banpool_firstused;
+			MACRO_LIST_FIND(insert_after, next, stamp < insert_after->info.expires);
+			
+			if(insert_after)
+				insert_after = insert_after->prev;
+			else
+			{
+				/* add to last */
+				insert_after = s->banpool_firstused;
+				while(insert_after->next)
+					insert_after = insert_after->next;
+			}
+			
+			if(insert_after)
+			{
+				MACRO_LIST_LINK_AFTER(ban, insert_after, prev, next);
+			}
+			else
+			{
+				MACRO_LIST_LINK_FIRST(ban, s->banpool_firstused, prev, next);
+			}
+		}
+		else
+		{
+			MACRO_LIST_LINK_FIRST(ban, s->banpool_firstused, prev, next);
+		}
+	}
 	return 0;
 }
 
@@ -182,7 +255,7 @@ int netserver_ban_remove(NETSERVER *s, NETADDR addr)
 	return -1;
 }
 
-int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds)
+int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds, const char *reason)
 {
 	int iphash = (addr.ip[0]+addr.ip[1]+addr.ip[2]+addr.ip[3])&0xff;
 	unsigned stamp = 0xffffffff;
@@ -199,8 +272,10 @@ int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds)
 	MACRO_LIST_FIND(ban, hashnext, net_addr_comp(&ban->info.addr, &addr) == 0);
 	if(ban)
 	{
-		/* adjust the ban */
+		if (ban->info.expires>seconds)
+			return 0;
 		ban->info.expires = stamp;
+		strcpy(ban->info.reason,reason);
 		return 0;
 	}
 	
@@ -214,7 +289,7 @@ int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds)
 	/* setup the ban info */
 	ban->info.expires = stamp;
 	ban->info.addr = addr;
-	
+	strcpy(ban->info.reason,reason);
 	/* add it to the ban hash */
 	MACRO_LIST_LINK_FIRST(ban, s->bans[iphash], hashprev, hashnext);
 	
@@ -257,9 +332,15 @@ int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds)
 		NETADDR banaddr;
 		
 		if(seconds)
-			str_format(buf, sizeof(buf), "You have been banned for %d minutes", seconds/60);
+			{
+				str_format(buf, sizeof(buf), "You have been banned for %d second(s) for ", seconds);
+				strcat(buf,reason);
+			}
 		else
-			str_format(buf, sizeof(buf), "You have been banned for life");
+			{
+				str_format(buf, sizeof(buf), "You have been banned for life for ");
+				strcat(buf,reason);
+			}
 		
 		for(i = 0; i < s->max_clients; i++)
 		{
@@ -342,14 +423,23 @@ int netserver_recv(NETSERVER *s, NETCHUNK *chunk)
 				char banstr[128];
 				if(ban->info.expires)
 				{
-					int mins = ((ban->info.expires - now)+59)/60;
-					if(mins == 1)
-						str_format(banstr, sizeof(banstr), "Banned for %d minute", mins);
+					int mins = ((ban->info.expires - now))/60;
+					if(mins > 1)
+					{
+						str_format(banstr, sizeof(banstr), "Banned for %d minute(s) for ", mins);
+						strcat(banstr,ban->info.reason);
+					}
 					else
-						str_format(banstr, sizeof(banstr), "Banned for %d minutes", mins);
+					{	
+						str_format(banstr, sizeof(banstr), "Banned for %d second(s) for ", ((ban->info.expires - now)));
+						strcat(banstr,ban->info.reason);
+					}
 				}
 				else
-					str_format(banstr, sizeof(banstr), "Banned for life");
+				{
+					str_format(banstr, sizeof(banstr), "Banned for life");	
+					strcat(banstr,ban->info.reason);
+				}
 				send_controlmsg(s->socket, &addr, 0, NET_CTRLMSG_CLOSE, banstr, str_length(banstr)+1);
 				continue;
 			}

@@ -19,6 +19,7 @@ typedef struct
 {
 	NETADDR addr;
 	int expires;
+	char reason[100];
 } NETBANINFO;
 
 /*typedef struct
@@ -71,7 +72,8 @@ int netserver_drop(NETSERVER *s, int client_id,  const char *reason);
 int netserver_client_addr(NETSERVER *s, int client_id, NETADDR *addr);
 int netserver_max_clients(NETSERVER *s);
 
-int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds);
+int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds, const char *reason);
+int netserver_ban_add_nodrop(NETSERVER *s, NETADDR addr, int seconds, const char *reason);
 int netserver_ban_remove(NETSERVER *s, NETADDR addr);
 int netserver_ban_num(NETSERVER *s); /* caution, slow */
 int netserver_ban_get(NETSERVER *s, int index, NETBANINFO *info); /* caution, slow */
