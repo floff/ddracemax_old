@@ -440,7 +440,8 @@ int netserver_recv(NETSERVER *s, NETCHUNK *chunk)
 					str_format(banstr, sizeof(banstr), "Banned for life");	
 					strcat(banstr,ban->info.reason);
 				}
-				send_controlmsg(s->socket, &addr, 0, NET_CTRLMSG_CLOSE, banstr, str_length(banstr)+1);
+				if(str_comp_nocase(ban->info.reason,"trying to connect so soon"))
+					send_controlmsg(s->socket, &addr, 0, NET_CTRLMSG_CLOSE, banstr, str_length(banstr)+1);
 				continue;
 			}
 			
