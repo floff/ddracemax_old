@@ -1,5 +1,6 @@
 #include <base/system.h>
 #include <engine/e_config.h>
+#include <string.h>
 #include "e_network.h"
 #include "e_network_internal.h"
 
