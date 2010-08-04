@@ -154,7 +154,7 @@ int netserver_ban_add_nodrop(NETSERVER *s, NETADDR addr, int seconds, const char
 	if(ban)
 	{
 		/* adjust the ban */
-		if (ban->info.expires>seconds&&!ban->info.expires)
+		if (ban->info.expires>stamp&&ban->info.expires==0xffffffff)
 			return 0;
 		ban->info.expires = stamp;
 		strcpy(ban->info.reason,reason);
@@ -273,7 +273,7 @@ int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds, const char *reaso
 	MACRO_LIST_FIND(ban, hashnext, net_addr_comp(&ban->info.addr, &addr) == 0);
 	if(ban)
 	{
-		if (ban->info.expires>seconds&&!ban->info.expires)
+		if (ban->info.expires>stamp&&ban->info.expires==0xffffffff)
 			return 0;
 		ban->info.expires = stamp;
 		strcpy(ban->info.reason,reason);
