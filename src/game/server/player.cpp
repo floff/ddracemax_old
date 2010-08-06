@@ -121,7 +121,7 @@ void PLAYER::on_disconnect()
 	char cmd[64];
 	if (muted>0)
 	{
-		str_format(cmd, sizeof(cmd), "ban %d ", client_id, muted/server_tickspeed());
+		str_format(cmd, sizeof(cmd), "ban %d %d %s", client_id, muted/server_tickspeed(),"Trying to evade mute");
 		console_execute_line(cmd,3,-1);
 	}
 	dbg_msg("game", "leave player='%d:%s'", client_id, server_clientname(client_id));
