@@ -154,7 +154,7 @@ int netserver_ban_add_nodrop(NETSERVER *s, NETADDR addr, int seconds, const char
 	if(ban)
 	{
 		/* adjust the ban */
-		if (ban->info.expires>stamp&&ban->info.expires==0xffffffff)
+		if (ban->info.expires>stamp||ban->info.expires==0xffffffff)
 			return 0;
 		ban->info.expires = stamp;
 		strcpy(ban->info.reason,reason);
@@ -273,7 +273,7 @@ int netserver_ban_add(NETSERVER *s, NETADDR addr, int seconds, const char *reaso
 	MACRO_LIST_FIND(ban, hashnext, net_addr_comp(&ban->info.addr, &addr) == 0);
 	if(ban)
 	{
-		if (ban->info.expires>stamp&&ban->info.expires==0xffffffff)
+		if (ban->info.expires>stamp||ban->info.expires==0xffffffff)
 			return 0;
 		ban->info.expires = stamp;
 		strcpy(ban->info.reason,reason);
@@ -422,7 +422,7 @@ int netserver_recv(NETSERVER *s, NETCHUNK *chunk)
 			{
 				// banned, reply with a message
 				char banstr[128];
-				if(ban->info.expires)
+				if(ban->info.expires&&(ban->info.expires!=0xffffffff))
 				{
 					int mins = ((ban->info.expires - now))/60;
 					if(mins > 1)
@@ -438,7 +438,7 @@ int netserver_recv(NETSERVER *s, NETCHUNK *chunk)
 				}
 				else
 				{
-					str_format(banstr, sizeof(banstr), "Banned for life");	
+					str_format(banstr, sizeof(banstr), "Banned for life for ");
 					strcat(banstr,ban->info.reason);
 				}
 				if(str_comp_nocase(ban->info.reason,"trying to connect so soon"))
