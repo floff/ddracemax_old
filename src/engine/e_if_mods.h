@@ -181,12 +181,26 @@ void mods_message(int msg, int client_id);
 void mods_set_authed(int client_id, int status);
 
 /*
-	Function: mods_set_resistent
+	Function: mods_set_authed
 		TODO
 	
 	Arguments:
 		arg1 - client_id
 		arg2 - status
+	
+	Returns:
+
+	See Also:
+		<other_func>
+*/
+void mods_set_logout(int client_id);
+
+/*
+	Function: mods_set_resistent
+		TODO
+	
+	Arguments:
+		arg1 - client_id
 	
 	Returns:
 

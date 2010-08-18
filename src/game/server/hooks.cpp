@@ -118,6 +118,16 @@ void mods_set_authed(int client_id, int status)
 	}
 }
 
+void mods_set_logout(int client_id)
+{
+	if(game.players[client_id])
+	{
+		if(game.players[client_id]->authed > 0) {
+			game.players[client_id]->authed = 0;
+		}
+	}
+}
+
 void mods_set_resistent(int client_id, int status)
 {
 	if(game.players[client_id])

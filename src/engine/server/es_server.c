@@ -928,9 +928,9 @@ static void server_process_client_packet(NETCHUNK *packet)
 							clients[cid].authed = 3;
 							mods_set_authed(cid, clients[cid].authed);
 							server_send_rcon_line(cid, "Authentication successful. Logined as Admin. Remote console access granted.");
-							dbg_msg("server", "cid=%d authed as Admin", cid);
+							dbg_msg("server", "%s authed as Admin. cid=%d", server_clientname(cid), cid);
 
-							clients[cid].pw_tries = 0; // not really necessary, but as a reminder
+							clients[cid].pw_tries = 0;
 						}
 						else if(strcmp(pw, config.sv_rcon_password_moder) == 0)
 						{
@@ -942,9 +942,9 @@ static void server_process_client_packet(NETCHUNK *packet)
 							clients[cid].authed = 2;
 							mods_set_authed(cid, clients[cid].authed);
 							server_send_rcon_line(cid, "Authentication successful. Logined as Moderator. Remote console access granted.");
-							dbg_msg("server", "cid=%d authed as Moderator", cid);
+							dbg_msg("server", "%s authed as Moderator. cid=%d", server_clientname(cid), cid);
 
-							clients[cid].pw_tries = 0; // not really necessary, but as a reminder
+							clients[cid].pw_tries = 0;
 						}
 						else if(strcmp(pw, config.sv_rcon_password_helper) == 0)
 						{
@@ -956,9 +956,9 @@ static void server_process_client_packet(NETCHUNK *packet)
 							clients[cid].authed = 1;
 							mods_set_authed(cid, clients[cid].authed);
 							server_send_rcon_line(cid, "Authentication successful. Logined as Helper. Remote console access granted.");
-							dbg_msg("server", "cid=%d authed as Helper", cid);
+							dbg_msg("server", "%s authed as Helper. cid=%d", server_clientname(cid), cid);
 
-							clients[cid].pw_tries = 0; // not really necessary, but as a reminder
+							clients[cid].pw_tries = 0;
 						}
 						else
 						{
@@ -1359,6 +1359,25 @@ static int server_run()
 	return 0;
 }
 
+static void con_logout(void *result, void *user_data, int cid)
+{
+	if(clients[cid].authed>0) {
+		dbg_msg("server", "%s logged out. cid=%x ip=%d.%d.%d.%d",
+			server_clientname(cid),
+			cid,
+			clients[cid].addr.ip[0], clients[cid].addr.ip[1], clients[cid].addr.ip[2], clients[cid].addr.ip[3]
+			);
+
+		msg_pack_start_system(NETMSG_RCON_AUTH_STATUS, MSGFLAG_VITAL);
+		msg_pack_int(0);
+		msg_pack_end();
+		server_send_msg(cid);
+
+		clients[cid].authed = 0;
+		mods_set_logout(cid);
+	}
+}
+
 static void con_kick(void *result, void *user_data, int cid)
 {
 	int cid1=console_arg_int(result, 0);
@@ -1519,6 +1538,7 @@ static void server_register_commands()
 
 	MACRO_REGISTER_COMMAND("record", "s", CFGFLAG_SERVER, con_record, 0, "",3);
 	MACRO_REGISTER_COMMAND("stoprecord", "", CFGFLAG_SERVER, con_stoprecord, 0, "",3);
+	MACRO_REGISTER_COMMAND("logout", "", CFGFLAG_SERVER, con_logout, 0, "",1);
 
 	
 }
