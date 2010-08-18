@@ -551,6 +551,7 @@ void CHARACTER::tick()
 	}
 	else if(col_is_end(pos.x, pos.y) && race_state == RACE_STARTED)
 	{
+		int new_rec = 0;
 		char buf[128];
 		if ((int)time/60 != 0)
 			str_format(buf, sizeof(buf), "%s finished in: %d minute(s) %5.3f second(s)", (!config.sv_championship)?server_clientname(player->client_id):"You", (int)time/60, time-((int)time/60*60));
@@ -563,8 +564,11 @@ void CHARACTER::tick()
 
 		PLAYER_SCORE *pscore = ((GAMECONTROLLER_RACE*)game.controller)->score.search_name(server_clientname(player->client_id));
 		
+		if(!pscore) new_rec = 1;
+		
 		if(pscore && time - pscore->score < 0)
 		{
+			new_rec = 1;
 			str_format(buf, sizeof(buf), "New record: %5.3f second(s) better", time - pscore->score);
 			if (!config.sv_championship)
 				game.send_chat(-1,GAMECONTEXT::CHAT_ALL, buf);
@@ -591,7 +595,7 @@ void CHARACTER::tick()
 							}
 						}
 					}
-				} else {
+				} else if(new_rec) {
 					player->score = (int)(rank1_score->score - time - 0.999);
 				}
 			}
