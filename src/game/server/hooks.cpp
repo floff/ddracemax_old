@@ -82,6 +82,18 @@ bool compare_players(PLAYER *pl1, PLAYER *pl2)
 		return false;
 }
 
+void set_race_score(int client_id) {
+	PLAYER_SCORE *rank1_score = ((GAMECONTROLLER_RACE*)game.controller)->score.get_rank(1);
+	PLAYER_SCORE *client_score = ((GAMECONTROLLER_RACE*)game.controller)->score.search_name(server_clientname(client_id));
+	if(!rank1_score) {
+		game.players[client_id]->score = 0;
+	} else if(client_score == 0) {
+		game.players[client_id]->score = -9999;
+	} else {
+		game.players[client_id]->score = (int)(rank1_score->score - client_score->score - 0.999);
+	}
+}
+
 
 // Server hooks
 void mods_client_direct_input(int client_id, void *input)
@@ -136,8 +148,12 @@ void mods_client_enter(int client_id)
 	//game.world.insert_entity(&game.players[client_id]);
 	game.players[client_id]->respawn();
 	dbg_msg("game", "join player='%d:%s'", client_id, server_clientname(client_id));
-
-	game.players[client_id]->score = 0;
+	
+	if(!config.sv_championship) {
+		set_race_score(client_id);
+	} else {
+		game.players[client_id]->score = 0;
+	}
 	
 	//if(game.controller->is_race())
 	//	((GAMECONTROLLER_RACE*)game.controller)->score.initPlayer(client_id);
@@ -475,6 +491,10 @@ void mods_message(int msgtype, int client_id)
 			char chattext[256];
 			str_format(chattext, sizeof(chattext), "%s changed name to %s", oldname, server_clientname(client_id));
 			game.send_chat(-1, GAMECONTEXT::CHAT_ALL, chattext);
+			
+			if(!config.sv_championship) {
+				set_race_score(client_id);
+			}
 		}
 		
 		// set skin
@@ -862,6 +882,7 @@ static void con_cheats_on(void *result, void *user_data, int cid)
 {
 	game.cheats=true;
 }
+
 
 static void con_tuning_off(void *result, void *user_data, int cid)
 {

@@ -37,13 +37,7 @@ PLAYER::~PLAYER()
 
 void PLAYER::tick()
 {
-	if (authed != score)
-	{
-		score=authed;
-		
-	}
 	server_setclientauthed(client_id,authed);
-	server_setclientscore(client_id, score);
 
 	if (muted>0)
 		muted--;

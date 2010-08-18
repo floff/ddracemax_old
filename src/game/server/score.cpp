@@ -87,6 +87,20 @@ PLAYER_SCORE *SCORE::search_name(const char *name)
 	return 0;
 }
 
+PLAYER_SCORE *SCORE::get_rank(int rank) {
+	rank--;
+	int c=0;
+	
+	for (std::list<PLAYER_SCORE>::iterator i = top.begin(); i!=top.end(); i++,c++)
+	{
+		if(c == rank) {
+			return & (*i);
+		}
+	}
+	
+	return 0;
+}
+
 
 void SCORE::parsePlayer(const char *name, float score)
 {

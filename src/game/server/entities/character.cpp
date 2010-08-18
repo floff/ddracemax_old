@@ -562,6 +562,7 @@ void CHARACTER::tick()
 			game.send_chat_target(player->client_id, buf);
 
 		PLAYER_SCORE *pscore = ((GAMECONTROLLER_RACE*)game.controller)->score.search_name(server_clientname(player->client_id));
+		
 		if(pscore && time - pscore->score < 0)
 		{
 			str_format(buf, sizeof(buf), "New record: %5.3f second(s) better", time - pscore->score);
@@ -573,8 +574,28 @@ void CHARACTER::tick()
 		
 		race_state = RACE_NONE;
 		
-		if(strncmp(server_clientname(player->client_id), "nameless tee", 12) != 0)
+		if(strncmp(server_clientname(player->client_id), "nameless tee", 12) != 0) {
 			((GAMECONTROLLER_RACE*)game.controller)->score.parsePlayer(server_clientname(player->client_id), (float)time);
+			
+			if(!config.sv_championship) {
+				PLAYER_SCORE *rank1_score = ((GAMECONTROLLER_RACE*)game.controller)->score.get_rank(1);
+				if(rank1_score->score >= time) {
+					// first finish or new top 1, reset all scores
+					for(int i = 0; i < MAX_CLIENTS; i++) {
+						if(game.players[i]) {
+							PLAYER_SCORE *client_score = ((GAMECONTROLLER_RACE*)game.controller)->score.search_name(server_clientname(i));
+							if(client_score == 0) {
+								game.players[i]->score = -9999;
+							} else {
+								game.players[i]->score = (int)(time - client_score->score - 0.999);
+							}
+						}
+					}
+				} else {
+					player->score = (int)(rank1_score->score - time - 0.999);
+				}
+			}
+		}
 	}
 	else if(col_is_kick(pos.x, pos.y) && !super)
 	{
