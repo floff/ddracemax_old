@@ -531,14 +531,20 @@ void CHARACTER::tick()
 		if (race_state == RACE_STARTED)
 		{
 			int int_time = (int)time;
-			str_format(buftime, sizeof(buftime), "Current time: %d min %d sec\n%s", int_time/60,(int_time%60),(config.sv_broadcast[0]==0)?"":config.sv_broadcast);
+			if(config.sv_broadcast_time == 0 || int_time < config.sv_broadcast_time) {
+				str_format(buftime, sizeof(buftime), "Current time: %d min %d sec\n%s", int_time/60,(int_time%60),(config.sv_broadcast[0]==0)?"":config.sv_broadcast);
+			}
+			else {
+				str_format(buftime, sizeof(buftime), "Current time: %d min %d sec", int_time/60,(int_time%60));
+			}
 						
 			game.send_broadcast(buftime, player->client_id);
 		}
 		else
 		{
-			if (config.sv_broadcast[0]!=0)
-			game.send_broadcast(config.sv_broadcast, player->client_id);
+			if (config.sv_broadcast[0]!=0) {
+				game.send_broadcast(config.sv_broadcast, player->client_id);
+			}
 		}
 		refreshtime = server_tick();
 	}
