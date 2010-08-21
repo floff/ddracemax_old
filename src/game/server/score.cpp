@@ -62,7 +62,6 @@ void SCORE::load()
 
 PLAYER_SCORE *SCORE::search_name(const char *name, int &pos)
 {
-	load();
 	pos=0;
 	for (std::list<PLAYER_SCORE>::iterator i = top.begin(); i!=top.end(); i++)
 	{
@@ -78,7 +77,6 @@ PLAYER_SCORE *SCORE::search_name(const char *name, int &pos)
 
 PLAYER_SCORE *SCORE::search_name(const char *name)
 {
-	load();
 	for (std::list<PLAYER_SCORE>::iterator i = top.begin(); i!=top.end(); i++)
 	{
 		if (!strcmp(i->name, name))
@@ -90,7 +88,6 @@ PLAYER_SCORE *SCORE::search_name(const char *name)
 }
 
 PLAYER_SCORE *SCORE::get_rank(int rank) {
-	load();
 	rank--;
 	int c=0;
 	
@@ -128,7 +125,6 @@ void SCORE::parsePlayer(const char *name, float score)
 
 void SCORE::top5_draw(int id, int debut)
 {
-	load();
 	int pos = 1;
 	//char buf[512];
 	game.send_chat_target(id, "----------- Top 5 -----------");
