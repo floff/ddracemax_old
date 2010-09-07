@@ -57,6 +57,7 @@ bool CHARACTER::spawn(PLAYER *player, vec2 pos, int team)
 	last_action = -1;
 	active_weapon = WEAPON_GUN;
 	last_weapon = WEAPON_HAMMER;
+	unfreezed_weapon = WEAPON_GUN;
 	queued_weapon = -1;
 
 	//clear();
@@ -797,6 +798,10 @@ bool CHARACTER::freeze(int time)
 		return false;
 	if (freeze_tick<server_tick()-server_tickspeed())
 	{
+		if(active_weapon != WEAPON_NINJA) {
+			unfreezed_weapon = active_weapon;
+		}
+
 		ninja.activationtick = server_tick();
 		weapons[WEAPON_NINJA].got = true;
 		weapons[WEAPON_NINJA].ammo = -1;
@@ -817,8 +822,10 @@ bool CHARACTER::unfreeze()
 		freeze_time=0;
 		weapons[WEAPON_NINJA].got = false;
 		active_weapon = last_weapon;
-		if(active_weapon == WEAPON_NINJA)
-			active_weapon = WEAPON_GUN;
+		if(active_weapon == WEAPON_NINJA) {
+			active_weapon = unfreezed_weapon;
+		}
+
 		set_weapon(active_weapon);
 		return true;
 	}

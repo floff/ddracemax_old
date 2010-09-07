@@ -53,6 +53,7 @@ public:
 	int active_weapon;
 	int last_weapon;
 	int queued_weapon;
+	int unfreezed_weapon;
 	
 	int reload_timer;
 	int attack_tick;
