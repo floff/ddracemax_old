@@ -1384,7 +1384,7 @@ static void con_kick(void *result, void *user_data, int cid)
 	if (cid==-1 || clients[cid].authed>clients[cid1].authed)
 	{
 		char buf[128];
-		str_format(buf,sizeof(buf),"Kicked by %s",server_clientname(cid));
+		str_format(buf,sizeof(buf),"Kicked from server");
 
 		server_kick(console_arg_int(result, 0), buf);
 	}

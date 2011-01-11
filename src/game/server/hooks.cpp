@@ -354,7 +354,7 @@ void mods_message(int msgtype, int client_id)
 							
 							return;
 						}
-						str_format(chatmsg, sizeof(chatmsg), "%s called vote to change server option '%s'", server_clientname(client_id), option->command);
+						str_format(chatmsg, sizeof(chatmsg), "Vote called to change server option '%s'", option->command);
 						str_format(desc, sizeof(desc), "%s", option->command);
 						str_format(cmd, sizeof(cmd), "%s", option->command);
 						last_mapvote = time_get();
@@ -405,7 +405,7 @@ void mods_message(int msgtype, int client_id)
 				return;
 			}
 			
-			str_format(chatmsg, sizeof(chatmsg), "%s called for vote to kick '%s'", server_clientname(client_id), server_clientname(kick_id));
+			str_format(chatmsg, sizeof(chatmsg), "Vote called to kick '%s'", server_clientname(kick_id));
 			str_format(desc, sizeof(desc), "Kick '%s'", server_clientname(kick_id));
 			str_format(cmd, sizeof(cmd), "kick %d", kick_id);
 			if (!config.sv_vote_kick_bantime)
@@ -853,7 +853,7 @@ static void con_mute(void *result, void *user_data, int cid)
 			game.players[cid1]->muted=seconds*server_tickspeed();
 		else
 			seconds=game.players[cid1]->muted/server_tickspeed();
-		str_format(buf, sizeof(buf), "%s muted by %s for %d seconds", server_clientname(cid1), server_clientname(cid), seconds);
+		str_format(buf, sizeof(buf), "%s was muted for %d seconds", server_clientname(cid1), seconds);
 		game.send_chat(-1, GAMECONTEXT::CHAT_ALL, buf);
 
 	}

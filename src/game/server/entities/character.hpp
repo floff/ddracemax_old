@@ -39,6 +39,8 @@ public:
 	bool doored;
 	int hammer_type;
 
+	bool endless_hook;
+
 	// weapon info
 	ENTITY *hitobjects[10];
 	int numobjectshit;

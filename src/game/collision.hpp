@@ -32,6 +32,8 @@ int col_is_end(int x, int y);
 int col_is_boost(int x, int y);
 int col_is_freeze(int x, int y);
 int col_is_unfreeze(int x, int y);
+int col_is_ehook_start(int x, int y);
+int col_is_ehook_end(int x, int y);
 int col_is_kick(int x, int y);
 vec2 boost_accel(int index);
 vec2 teleport(int z);

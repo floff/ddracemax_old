@@ -200,6 +200,28 @@ int col_is_kick(int x, int y)
 	return teleporter[ny*width+nx] == TILE_KICK;
 }
 
+int col_is_ehook_start(int x, int y)
+{
+	int nx = x/32;
+	int ny = y/32;
+	if(y < 0 || nx < 0 || nx >= width || ny >= height)
+		return 0;
+
+	int tile = teleporter[ny*width+nx];
+	
+	return tile == TILE_EHOOK_START;
+}
+
+int col_is_ehook_end(int x, int y)
+{
+	int nx = x/32;
+	int ny = y/32;
+	if(y < 0 || nx < 0 || nx >= width || ny >= height)
+		return 0;
+	
+	return teleporter[ny*width+nx] == TILE_EHOOK_END;
+}
+
 int col_is_boost(int x, int y)
 {
 	int nx = x/32;

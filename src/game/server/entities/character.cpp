@@ -60,6 +60,8 @@ bool CHARACTER::spawn(PLAYER *player, vec2 pos, int team)
 	unfreezed_weapon = WEAPON_GUN;
 	queued_weapon = -1;
 
+	endless_hook = false;
+
 	//clear();
 	this->player = player;
 	this->pos = pos;
@@ -479,7 +481,7 @@ void CHARACTER::on_direct_input(NETOBJ_PLAYER_INPUT *new_input)
 void CHARACTER::tick()
 {
 	//endless drag
-	if(config.sv_endless_hook)
+	if(config.sv_endless_hook || endless_hook)
 		core.hook_tick = 0;
 
 	if(player->force_balanced)
@@ -573,14 +575,23 @@ void CHARACTER::tick()
 		
 		if(!pscore) new_rec = 1;
 		
-		if(pscore && time - pscore->score < 0)
-		{
-			new_rec = 1;
-			str_format(buf, sizeof(buf), "New record: %5.3f second(s) better", time - pscore->score);
-			if (!config.sv_championship)
-				game.send_chat(-1,GAMECONTEXT::CHAT_ALL, buf);
-			else
-				game.send_chat_target(player->client_id, buf);
+		if(pscore) {
+			if(time - pscore->score < 0)
+			{
+				new_rec = 1;
+				str_format(buf, sizeof(buf), "New record: %5.3f second(s) faster, good job", time - pscore->score);
+				if (!config.sv_championship)
+					game.send_chat(-1,GAMECONTEXT::CHAT_ALL, buf);
+				else
+					game.send_chat_target(player->client_id, buf);
+			}
+			else if(time - pscore->score > 0) {
+				str_format(buf, sizeof(buf), "No record: %5.3f second(s) slower, better luck next time", time - pscore->score);
+				if (!config.sv_championship)
+					game.send_chat(-1,GAMECONTEXT::CHAT_ALL, buf);
+				else
+					game.send_chat_target(player->client_id, buf);
+			}
 		}
 		
 		race_state = RACE_NONE;
@@ -613,7 +624,7 @@ void CHARACTER::tick()
 		if (player->authed>0)
 			die(-1,WEAPON_WORLD);
 		else
-			server_kick(player->client_id, "You was kicked by kick zone");
+			server_kick(player->client_id, "You were kicked by kick zone");
 	}
 	else if(col_is_freeze(pos.x, pos.y) && !super)
 	{
@@ -623,6 +634,21 @@ void CHARACTER::tick()
 	{
 		unfreeze();
 	}
+	else if(col_is_ehook_start(pos.x, pos.y) && !endless_hook && !config.sv_endless_hook) {
+		char buf[128];
+		endless_hook = true;
+
+		str_format(buf, sizeof(buf), "Endless hook has been activated");
+		game.send_chat_target(player->client_id, buf);
+	}
+	else if(col_is_ehook_end(pos.x, pos.y) && endless_hook && !config.sv_endless_hook) {
+		char buf[128];
+		endless_hook = false;
+
+		str_format(buf, sizeof(buf), "Endless hook has been deactivated");
+		game.send_chat_target(player->client_id, buf);
+	}
+
 	int booster=col_is_boost(pos.x, pos.y);
 	core.vel+=boost_accel(booster);
 
