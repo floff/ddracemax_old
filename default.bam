@@ -16,7 +16,7 @@ function Script(name)
 --		return str_replace(name, "/", "\\")
         return "C:\\Python26\\python.exe " .. str_replace(name, "/", "\\") 
 	end
-	return "python " .. name
+	return "python2 " .. name
 end
 
 function CHash(output, ...)
