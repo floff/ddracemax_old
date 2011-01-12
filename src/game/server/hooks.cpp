@@ -252,10 +252,11 @@ void mods_message(int msgtype, int client_id)
 			{	
 				if(!str_comp_nocase(msg->message, "/info"))
 				{
-					game.send_chat_target(client_id, "DDRace mod by 3DA");
+					game.send_chat_target(client_id, "DDRace mod by 3DA, edited for DDracemaX");
 					game.send_chat_target(client_id,"Version: " RACE_VERSION);
-					game.send_chat_target(client_id, "Visit: http://fluxid.pl/teeworlds/ddrace2/");
-					game.send_chat_target(client_id, "or Visit: http://github.com/fluxid/ddrace");
+					game.send_chat_target(client_id, "http://github.com/floff/ddracemax_old");
+					game.send_chat_target(client_id, "http://github.com/noother/ddracemax_old");
+					game.send_chat_target(client_id, "http://github.com/fluxid/ddrace");
 				}
 				else if(!strncmp(msg->message, "/top5", 5) && !config.sv_championship) 
 				{
