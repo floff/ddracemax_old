@@ -772,7 +772,7 @@ static void con_kill_pl(void *result, void *user_data, int cid)
 	{
 		game.players[cid1]->kill_character(WEAPON_GAME);
 		char buf[512];
-		str_format(buf, sizeof(buf), "%s killed by %s", server_clientname(cid1), server_clientname(cid));
+		str_format(buf, sizeof(buf), "%s killed by admin", server_clientname(cid1));
 		game.send_chat(-1, GAMECONTEXT::CHAT_ALL, buf);
 	}
 }
